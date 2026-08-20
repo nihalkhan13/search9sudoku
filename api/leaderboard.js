@@ -13,9 +13,12 @@ export default async function handler(req, res) {
   const user = userFromRequest(req);
   const url = new URL(req.url, `http://${req.headers.host}`);
   const puzzleId = url.searchParams.get('puzzleId');
+  const difficulty = url.searchParams.get('difficulty');
+  const mode = url.searchParams.get('mode') ?? 'daily';
   const scope = url.searchParams.get('scope') ?? 'global';
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 50));
-  if (!puzzleId) return send(res, 400, { error: 'puzzleId required' });
+  if (mode === 'daily' && !puzzleId) return send(res, 400, { error: 'puzzleId required for a daily leaderboard' });
+  if (mode === 'practice' && !['easy', 'medium', 'hard'].includes(difficulty)) return send(res, 400, { error: 'difficulty required for a practice leaderboard' });
   try {
     let rows = await db(`scores?select=id,user_id,puzzle_id,time_ms,check_count,difficulty,date_seed,created_at&order=created_at.desc&limit=500`);
     if (scope === 'local' && user) rows = rows.filter((row) => row.user_id === user.id);
@@ -25,7 +28,9 @@ export default async function handler(req, res) {
       const ids = new Set([user.id, ...(friendRows ?? []).map((row) => row.friend_id)]);
       rows = rows.filter((row) => ids.has(row.user_id));
     }
-    rows = rows.filter((row) => row.puzzle_id === puzzleId).sort(compare).slice(0, limit);
+    rows = rows.filter((row) => mode === 'practice'
+      ? row.date_seed == null && row.difficulty === difficulty
+      : row.puzzle_id === puzzleId).sort(compare).slice(0, limit);
     const ids = [...new Set(rows.map((row) => row.user_id))];
     const names = ids.length ? await db(`users?select=id,username&id=in.(${ids.join(',')})`) : [];
     const nameMap = new Map((names ?? []).map((row) => [row.id, row.username]));

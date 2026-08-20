@@ -248,6 +248,10 @@
   <div id="auth-login-fields">
     <label class="form-field"><span>Username</span><input id="auth-username" autocomplete="username" maxlength="24" placeholder="e.g. arrow9"></label>
     <label class="form-field"><span>Password</span><input id="auth-password" type="password" autocomplete="current-password" minlength="6" placeholder="6+ characters"></label>
+    <div class="location-fields">
+      <label class="form-field"><span>Country <small>used when you create an account</small></span><select id="auth-country" autocomplete="country"></select></label>
+      <label class="form-field" id="auth-state-field"><span>State</span><select id="auth-state" autocomplete="address-level1"></select></label>
+    </div>
     <p class="form-error" id="auth-error" role="alert"></p>
     <div class="auth-actions">
       <button class="action-btn action-primary" id="btn-auth-login" type="button">Log in</button>
@@ -257,13 +261,23 @@
   </div>
   <div id="auth-signed-in" hidden>
     <p class="signed-in-line">You are playing as <strong id="auth-user-name"></strong>.</p>
+    <button class="action-btn" id="btn-edit-profile" type="button">Edit profile</button>
+    <div id="profile-edit-fields" class="profile-edit-fields" hidden>
+      <label class="form-field"><span>Country</span><select id="profile-country" autocomplete="country"></select></label>
+      <label class="form-field" id="profile-state-field"><span>State</span><select id="profile-state" autocomplete="address-level1"></select></label>
+      <p class="form-error" id="profile-error" role="alert"></p>
+      <div class="auth-actions">
+        <button class="action-btn action-primary" id="btn-save-profile" type="button">Save profile</button>
+        <button class="action-btn" id="btn-cancel-profile" type="button">Cancel</button>
+      </div>
+    </div>
     <button class="action-btn" id="btn-auth-logout" type="button">Sign out</button>
   </div>
   <button class="action-btn" data-close-dialog>Close</button>
 </dialog>
 
 <dialog id="dialog-leaderboard" class="dlg dlg-leaderboard">
-  <div class="dialog-heading-row"><div><h2>Daily leaderboard</h2><p id="leaderboard-meta" class="dialog-lede">Global</p></div><span class="leaderboard-trophy">✦</span></div>
+  <div class="dialog-heading-row"><div><h2 id="leaderboard-title">Daily leaderboard</h2><p id="leaderboard-meta" class="dialog-lede">Global</p></div><span class="leaderboard-trophy">✦</span></div>
   <div class="leaderboard-tabs" role="tablist" aria-label="Leaderboard type">
     <button class="tab-btn is-active" type="button" data-leaderboard-scope="global">Global</button>
     <button class="tab-btn" type="button" data-leaderboard-scope="local">Local</button>

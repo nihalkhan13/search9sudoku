@@ -6,6 +6,7 @@
  */
 
 import { storage } from './StorageService.js';
+import { normalizeLocation } from '../core/locations.js';
 
 export const API_BASE = '/api';
 async function request(path, options = {}) {
@@ -45,11 +46,28 @@ export async function login(username, password) {
   return storage.localLogin(username, password);
 }
 
-export async function register(username, password) {
-  const remote = await request('/auth', { method: 'POST', body: JSON.stringify({ action: 'register', username, password }) });
+export async function register(username, password, location = {}) {
+  const normalized = normalizeLocation(location.country, location.state);
+  if (!normalized) throw new Error('Choose a country, plus a US state when applicable');
+  const remote = await request('/auth', { method: 'POST', body: JSON.stringify({ action: 'register', username, password, ...normalized }) });
   if (remote?._error && remote.status !== 503) throw new Error(remote._error);
   if (remote?.user) return persistSession(remote);
-  return storage.localRegister(username, password);
+  return storage.localRegister(username, password, normalized);
+}
+
+export async function updateProfile(location = {}) {
+  const normalized = normalizeLocation(location.country, location.state);
+  if (!normalized) throw new Error('Choose a country, plus a US state when applicable');
+  const remote = await request('/profile', { method: 'PATCH', body: JSON.stringify(normalized) });
+  if (remote?._error && remote.status !== 503) throw new Error(remote._error);
+  if (remote?.user) {
+    const session = storage.loadSession();
+    storage.saveSession({ ...session, user: remote.user });
+    return remote.user;
+  }
+  const user = currentUser();
+  if (user?.local) return storage.updateLocalProfile(user.id, normalized);
+  return null;
 }
 
 export async function playAsGuest() {
@@ -69,12 +87,14 @@ export async function submitScore(entry) {
   return { accepted: true, offline: true };
 }
 
-export async function fetchLeaderboard({ puzzleId, scope = 'global', limit = 50 } = {}) {
-  const params = new URLSearchParams({ puzzleId, scope, limit: String(limit) });
+export async function fetchLeaderboard({ puzzleId, difficulty, mode = 'daily', scope = 'global', limit = 50 } = {}) {
+  const params = new URLSearchParams({ scope, mode, limit: String(limit) });
+  if (puzzleId) params.set('puzzleId', puzzleId);
+  if (difficulty) params.set('difficulty', difficulty);
   const remote = await request(`/leaderboard?${params}`);
   if (remote?.entries) return remote;
   return {
-    entries: storage.getLocalScores(puzzleId, scope, currentUser()?.id).slice(0, limit),
+    entries: storage.getLocalScores(puzzleId, scope, currentUser()?.id, { mode, difficulty }).slice(0, limit),
     offline: true,
   };
 }

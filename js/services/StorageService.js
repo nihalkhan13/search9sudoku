@@ -212,26 +212,35 @@ export class StorageService {
     try { window.localStorage.removeItem(KEYS.SESSION); } catch { /* ignore */ }
   }
 
-  localRegister(username, password) {
+  localRegister(username, password, location = {}) {
     const clean = String(username ?? '').trim().toLowerCase();
     const users = this._read(KEYS.AUTH_USERS, {});
     if (!clean || String(password ?? '').length < 6 || users[clean]) return null;
-    users[clean] = { id: `local-${clean}`, username: clean, password };
+    users[clean] = { id: `local-${clean}`, username: clean, password, country: location.country ?? 'US', state: location.state ?? null };
     this._write(KEYS.AUTH_USERS, users);
-    return { id: users[clean].id, username: clean, guest: false, local: true };
+    return { id: users[clean].id, username: clean, country: users[clean].country, state: users[clean].state, guest: false, local: true };
   }
 
   localLogin(username, password) {
     const clean = String(username ?? '').trim().toLowerCase();
     const user = this._read(KEYS.AUTH_USERS, {})[clean];
     if (!user || user.password !== password) return null;
-    return { id: user.id, username: user.username, guest: false, local: true };
+    return { id: user.id, username: user.username, country: user.country ?? 'US', state: user.state ?? null, guest: false, local: true };
   }
 
   findLocalUser(username) {
     const clean = String(username ?? '').trim().toLowerCase();
     const user = this._read(KEYS.AUTH_USERS, {})[clean];
-    return user ? { id: user.id, username: user.username, guest: false, local: true } : null;
+    return user ? { id: user.id, username: user.username, country: user.country ?? 'US', state: user.state ?? null, guest: false, local: true } : null;
+  }
+
+  updateLocalProfile(userId, location = {}) {
+    const users = this._read(KEYS.AUTH_USERS, {});
+    const key = Object.keys(users).find((candidate) => users[candidate].id === userId);
+    if (!key) return null;
+    users[key] = { ...users[key], country: location.country, state: location.state ?? null };
+    this._write(KEYS.AUTH_USERS, users);
+    return { id: users[key].id, username: users[key].username, country: users[key].country, state: users[key].state, guest: false, local: true };
   }
 
   guestSession() {
@@ -248,8 +257,11 @@ export class StorageService {
     return scores;
   }
 
-  getLocalScores(puzzleId, scope = 'local', userId = null) {
-    const scores = this._read(KEYS.LOCAL_SCORES, []).filter((s) => s.puzzleId === puzzleId);
+  getLocalScores(puzzleId, scope = 'local', userId = null, filters = {}) {
+    const scores = this._read(KEYS.LOCAL_SCORES, []).filter((s) => {
+      if (filters.mode === 'practice') return s.dateSeed == null && s.difficulty === filters.difficulty;
+      return s.puzzleId === puzzleId;
+    });
     if (scope === 'friends' && userId) {
       const friendIds = new Set(this._read(KEYS.FRIENDS, []).map((f) => f.id));
       friendIds.add(userId);

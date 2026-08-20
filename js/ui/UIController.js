@@ -10,6 +10,7 @@
 
 import { CELLS, SIZE, NO_ARROW, rowOf, colOf, indexOf } from '../core/constants.js';
 import { MODE } from '../core/GameEngine.js';
+import { COUNTRIES, DEFAULT_COUNTRY, US_STATES } from '../core/locations.js';
 import { formatTime } from './Timer.js';
 
 /** Palette for the colour tool - index matches numpad keys 1..9. */
@@ -41,6 +42,7 @@ export class UIController {
     this.showErrors = false; // set by "Check", cleared on the next edit
 
     this._cacheDom();
+    this._populateLocationChoices();
     this._buildGrid();
     this._bindGrid();
     this._bindControls();
@@ -86,7 +88,16 @@ export class UIController {
       authForm: $('auth-form'),
       authUsername: $('auth-username'),
       authPassword: $('auth-password'),
+      authCountry: $('auth-country'),
+      authState: $('auth-state'),
+      authStateField: $('auth-state-field'),
       authError: $('auth-error'),
+      profileCountry: $('profile-country'),
+      profileState: $('profile-state'),
+      profileStateField: $('profile-state-field'),
+      profileEditFields: $('profile-edit-fields'),
+      profileError: $('profile-error'),
+      editProfileButton: $('btn-edit-profile'),
       leaderboardBody: $('leaderboard-body'),
       leaderboardMeta: $('leaderboard-meta'),
       friendUsername: $('friend-username'),
@@ -290,6 +301,15 @@ export class UIController {
     on('btn-auth-register', () => this._submitAuth('register'));
     on('btn-auth-guest', () => this._runAuthAction('guest'));
     on('btn-auth-logout', () => this._runAuthAction('logout'));
+    on('btn-edit-profile', () => {
+      if (this.dom.profileEditFields) this.dom.profileEditFields.hidden = false;
+      if (this.dom.editProfileButton) this.dom.editProfileButton.hidden = true;
+      this._setLocationControls(this.dom.profileCountry, this.dom.profileState, this.dom.profileStateField, this._profileUser ?? {});
+    });
+    on('btn-cancel-profile', () => this._closeProfileEditor());
+    on('btn-save-profile', () => this._submitProfile());
+    this.dom.authCountry?.addEventListener('change', () => this._toggleStateField(this.dom.authCountry, this.dom.authState, this.dom.authStateField));
+    this.dom.profileCountry?.addEventListener('change', () => this._toggleStateField(this.dom.profileCountry, this.dom.profileState, this.dom.profileStateField));
     for (const btn of document.querySelectorAll('[data-leaderboard-scope]')) {
       btn.addEventListener('click', () => {
         for (const other of document.querySelectorAll('[data-leaderboard-scope]')) other.classList.toggle('is-active', other === btn);
@@ -316,6 +336,47 @@ export class UIController {
     for (const btn of document.querySelectorAll('[data-close-dialog]')) {
       btn.addEventListener('click', () => btn.closest('dialog')?.close());
     }
+  }
+
+  _populateLocationChoices() {
+    const fillCountries = (select) => {
+      if (!select) return;
+      select.replaceChildren(...COUNTRIES.map(({ label, value }) => new Option(label, value)));
+      select.value = DEFAULT_COUNTRY;
+    };
+    const fillStates = (select) => {
+      if (!select) return;
+      select.replaceChildren(new Option('Select a state', ''));
+      select.append(...US_STATES.map(({ label, value }) => new Option(label, value)));
+    };
+    fillCountries(this.dom.authCountry);
+    fillCountries(this.dom.profileCountry);
+    fillStates(this.dom.authState);
+    fillStates(this.dom.profileState);
+    this._toggleStateField(this.dom.authCountry, this.dom.authState, this.dom.authStateField);
+    this._toggleStateField(this.dom.profileCountry, this.dom.profileState, this.dom.profileStateField);
+  }
+
+  _toggleStateField(countrySelect, stateSelect, stateField) {
+    const isUs = countrySelect?.value === DEFAULT_COUNTRY;
+    if (stateField) stateField.hidden = !isUs;
+    if (stateSelect) {
+      stateSelect.disabled = !isUs;
+      if (!isUs) stateSelect.value = '';
+    }
+  }
+
+  _setLocationControls(countrySelect, stateSelect, stateField, user = {}) {
+    if (!countrySelect) return;
+    countrySelect.value = user.country ?? DEFAULT_COUNTRY;
+    this._toggleStateField(countrySelect, stateSelect, stateField);
+    if (stateSelect) stateSelect.value = user.state ?? '';
+  }
+
+  _closeProfileEditor() {
+    if (this.dom.profileEditFields) this.dom.profileEditFields.hidden = true;
+    if (this.dom.editProfileButton) this.dom.editProfileButton.hidden = false;
+    if (this.dom.profileError) this.dom.profileError.textContent = '';
   }
 
   /* ----------------------------------------------------------------- theme */
@@ -725,34 +786,57 @@ export class UIController {
     if (signedIn) signedIn.hidden = !loggedIn;
     const name = document.getElementById('auth-user-name');
     if (name) name.textContent = user ? `${user.username}${user.guest ? ' · local only' : ''}` : '';
+    this._profileUser = user;
+    this._setLocationControls(this.dom.authCountry, this.dom.authState, this.dom.authStateField, user ?? {});
+    this._setLocationControls(this.dom.profileCountry, this.dom.profileState, this.dom.profileStateField, user ?? {});
+    if (this.dom.editProfileButton) this.dom.editProfileButton.hidden = !loggedIn || Boolean(user?.guest);
+    if (this.dom.profileEditFields) this.dom.profileEditFields.hidden = true;
   }
 
   async _submitAuth(action) {
     const username = this.dom.authUsername?.value.trim();
     const password = this.dom.authPassword?.value ?? '';
-    await this._runAuthAction(action, { username, password });
+    await this._runAuthAction(action, {
+      username,
+      password,
+      country: this.dom.authCountry?.value,
+      state: this.dom.authState?.value,
+    });
+  }
+
+  async _submitProfile() {
+    await this._runAuthAction('updateProfile', {
+      country: this.dom.profileCountry?.value,
+      state: this.dom.profileState?.value,
+    });
+    if (!this.dom.profileError?.textContent) this._closeProfileEditor();
   }
 
   async _runAuthAction(action, payload = {}) {
     try {
       if (action === 'login') await this.actions.authLogin?.(payload.username, payload.password);
-      if (action === 'register') await this.actions.authRegister?.(payload.username, payload.password);
+      if (action === 'register') await this.actions.authRegister?.(payload.username, payload.password, { country: payload.country, state: payload.state });
+      if (action === 'updateProfile') await this.actions.authUpdateProfile?.({ country: payload.country, state: payload.state });
       if (action === 'guest') await this.actions.authGuest?.();
       if (action === 'logout') await this.actions.authLogout?.();
       if (this.dom.authError) this.dom.authError.textContent = '';
-      if (action !== 'logout') document.getElementById('dialog-auth')?.close();
+      if (this.dom.profileError) this.dom.profileError.textContent = '';
+      if (action !== 'logout' && action !== 'updateProfile') document.getElementById('dialog-auth')?.close();
     } catch (err) {
-      if (this.dom.authError) this.dom.authError.textContent = err.message;
+      const target = action === 'updateProfile' ? this.dom.profileError : this.dom.authError;
+      if (target) target.textContent = err.message;
     }
   }
 
-  renderLeaderboard(entries, scope = 'global', offline = false) {
+  renderLeaderboard(entries, scope = 'global', offline = false, mode = 'daily') {
     const body = this.dom.leaderboardBody;
     if (!body) return;
     const labels = { global: 'Global', local: 'Local device', friends: 'Friends' };
     if (this.dom.leaderboardMeta) {
-      this.dom.leaderboardMeta.textContent = `${labels[scope] ?? 'Leaderboard'}${offline ? ' · offline preview' : ''}`;
+      this.dom.leaderboardMeta.textContent = `${labels[scope] ?? 'Leaderboard'} · ${mode === 'practice' ? 'all practice puzzles' : "today's puzzle"}${offline ? ' · offline preview' : ''}`;
     }
+    const title = document.getElementById('leaderboard-title');
+    if (title) title.textContent = mode === 'practice' ? 'Practice leaderboard' : 'Daily leaderboard';
     if (!entries.length) {
       body.innerHTML = '<p class="empty-state">No scores yet. Be the first to solve this puzzle.</p>';
       return;

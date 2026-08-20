@@ -43,8 +43,13 @@ there because this folder already contains both.
 5. Deploy.
 
 After deployment, open the Vercel URL, create a username/password account, and
-solve the daily puzzle. The global leaderboard accepts verified daily solves
-only; the API checks the submitted grid server-side before saving it.
+solve the daily puzzle. The global leaderboard accepts verified daily and
+practice solves; the API regenerates the seeded puzzle and checks the submitted
+grid server-side before saving it.
+
+If the database already existed, run the two `alter table` statements at the
+bottom of `supabase/schema.sql` once in Supabase SQL Editor to add profile
+location fields.
 
 ## Scoring behavior
 

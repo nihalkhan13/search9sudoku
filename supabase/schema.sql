@@ -6,8 +6,14 @@ create table if not exists public.users (
   id uuid primary key default gen_random_uuid(),
   username text not null,
   password_hash text not null,
+  country text not null default 'US',
+  state text,
   created_at timestamptz not null default now()
 );
+
+-- Safe migration for accounts created before profile locations were added.
+alter table public.users add column if not exists country text not null default 'US';
+alter table public.users add column if not exists state text;
 
 create unique index if not exists users_username_lower_idx on public.users (lower(username));
 

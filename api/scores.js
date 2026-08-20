@@ -1,5 +1,6 @@
 import { generatePuzzle } from '../js/core/Generator.js';
 import { isSolved } from '../js/core/Solver.js';
+import { dailyDifficulty } from '../js/core/rng.js';
 import { db, readBody, ready, send, userFromRequest } from './_lib/db.js';
 
 export default async function handler(req, res) {
@@ -12,11 +13,18 @@ export default async function handler(req, res) {
     const difficulty = ['easy', 'medium', 'hard'].includes(body.difficulty) ? body.difficulty : 'medium';
     const checkCount = Math.max(0, Number(body.checkCount) || 0);
     const timeMs = Math.max(1, Math.round(Number(body.timeMs) || 0));
+    const puzzleId = String(body.puzzleId ?? '');
+    const isDaily = body.isDaily === true;
     const dateSeed = String(body.dateSeed ?? '');
-    if (!body.isDaily || !/^\d{4}-\d{2}-\d{2}$/.test(dateSeed) || !/^[0-9]{81}$/.test(String(body.grid ?? ''))) {
-      return send(res, 400, { error: 'Only verified daily scores can enter the global leaderboard' });
+    const puzzleSeed = isDaily ? dateSeed : String(body.puzzleSeed ?? '');
+    if (!puzzleId || !/^[0-9]{81}$/.test(String(body.grid ?? '')) || !/^[a-zA-Z0-9:_.,-]{1,160}$/.test(puzzleSeed)) {
+      return send(res, 400, { error: 'That score is missing a valid puzzle or solution grid' });
     }
-    const puzzle = generatePuzzle({ difficulty, seed: dateSeed });
+    if (isDaily && (!/^\d{4}-\d{2}-\d{2}$/.test(dateSeed) || puzzleId !== `daily-${dateSeed}` || dailyDifficulty(dateSeed) !== difficulty)) {
+      return send(res, 400, { error: 'That daily puzzle does not match today\'s verified puzzle' });
+    }
+    const puzzle = generatePuzzle({ difficulty, seed: puzzleSeed });
+    if (!isDaily && puzzle.id !== puzzleId) return send(res, 400, { error: 'That practice puzzle could not be verified' });
     const grid = Int8Array.from(String(body.grid).split('').map(Number));
     if (!isSolved(grid, puzzle.arrows)) return send(res, 422, { error: 'That grid is not a valid solution' });
 
@@ -25,7 +33,7 @@ export default async function handler(req, res) {
     const improves = !old || checkCount < old.check_count || (checkCount === old.check_count && timeMs < old.time_ms);
     if (!improves) return send(res, 200, { accepted: false, reason: 'existing score is better' });
 
-    const record = { user_id: user.id, puzzle_id: body.puzzleId, date_seed: dateSeed, difficulty, time_ms: timeMs, check_count: checkCount, grid: String(body.grid) };
+    const record = { user_id: user.id, puzzle_id: puzzleId, date_seed: isDaily ? dateSeed : null, difficulty, time_ms: timeMs, check_count: checkCount, grid: String(body.grid) };
     const saved = old
       ? await db(`scores?id=eq.${old.id}`, { method: 'PATCH', body: record, headers: { Prefer: 'return=representation' } })
       : await db('scores', { method: 'POST', body: [record], headers: { Prefer: 'return=representation' } });

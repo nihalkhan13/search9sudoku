@@ -19,6 +19,7 @@ import {
   currentUser,
   login,
   register,
+  updateProfile,
   playAsGuest,
   logout,
   submitScore,
@@ -181,10 +182,17 @@ function onSolved() {
     difficulty,
     dateSeed: engine.puzzle.dateSeed ?? null,
     isDaily,
-    grid: engine.values,
+    puzzleSeed: engine.puzzle.seed,
+    grid: Array.from(engine.values).join(''),
   };
   storage.saveLocalScore({ ...score, userId: activeUser?.id ?? 'local-guest', username: activeUser?.username ?? 'Guest' });
-  submitScore(score).catch(() => {});
+  submitScore(score).then((result) => {
+    if (result?._error) {
+      ui.flash(result.status === 401 ? 'Score saved here. Sign in to publish it globally.' : 'Score saved here, but could not reach the global board.', 'neutral');
+    } else if (result?.accepted && !result?.offline) {
+      ui.flash('Score added to the leaderboard', 'good');
+    }
+  }).catch(() => {});
 
   document.getElementById('victory-time').textContent = formatTime(elapsed);
   document.getElementById('victory-difficulty').textContent =
@@ -215,12 +223,20 @@ async function authLogin(username, password) {
   ui.flash(`Welcome back, ${user.username}`, 'good');
 }
 
-async function authRegister(username, password) {
-  const user = await register(username, password);
+async function authRegister(username, password, location) {
+  const user = await register(username, password, location);
   if (!user) throw new Error('Choose a new username and a password of 6+ characters');
   activeUser = user;
   ui.renderUser(activeUser);
   ui.flash(`Account created for ${user.username}`, 'good');
+}
+
+async function authUpdateProfile(location) {
+  const user = await updateProfile(location);
+  if (!user) throw new Error('Could not update your profile');
+  activeUser = user;
+  ui.renderUser(activeUser);
+  ui.flash('Profile updated', 'good');
 }
 
 async function authGuest() {
@@ -238,11 +254,13 @@ async function authLogout() {
 
 async function openLeaderboard(scope = 'global') {
   const result = await fetchLeaderboard({
-    puzzleId: engine.puzzle?.id,
+    puzzleId: currentMode === 'daily' ? engine.puzzle?.id : null,
+    difficulty: engine.puzzle?.difficulty,
+    mode: currentMode,
     scope,
     limit: 50,
   });
-  ui.renderLeaderboard(result?.entries ?? [], scope, Boolean(result?.offline));
+  ui.renderLeaderboard(result?.entries ?? [], scope, Boolean(result?.offline), currentMode);
 }
 
 async function addFriendByUsername(username) {
@@ -295,7 +313,7 @@ async function boot() {
     settings,
     actions: {
       newPuzzle, dailyPuzzle, restart, share, openStats, onMove, onSolved, onCheck,
-      authLogin, authRegister, authGuest, authLogout, openLeaderboard,
+      authLogin, authRegister, authUpdateProfile, authGuest, authLogout, openLeaderboard,
       addFriend: addFriendByUsername,
       getCheckCount: () => checkCount,
     },
