@@ -838,7 +838,7 @@ export class UIController {
     const title = document.getElementById('leaderboard-title');
     if (title) title.textContent = mode === 'practice' ? 'Practice leaderboard' : 'Daily leaderboard';
     if (!entries.length) {
-      body.innerHTML = '<p class="empty-state">No scores yet. Be the first to solve this puzzle.</p>';
+      body.innerHTML = `<p class="empty-state">No scores yet. Be the first to solve ${mode === 'practice' ? 'a puzzle at this difficulty' : 'today\'s puzzle'}.</p>`;
       return;
     }
     body.innerHTML = `<table class="leaderboard-table"><thead><tr><th>#</th><th>Player</th><th>Time</th><th>Checks</th></tr></thead><tbody>${entries.map((entry, index) => `
