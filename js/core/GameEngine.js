@@ -240,19 +240,21 @@ export class GameEngine {
   }
 
   /**
-   * Toggle a palette colour on the selection. Colours apply to given cells
-   * too - they are a solver aid, not an answer.
+   * Apply one palette colour to the selection. Colours apply to given cells
+   * too - they are a solver aid, not an answer. A tile has one active colour:
+   * choosing a new swatch replaces the previous one, while choosing the
+   * current swatch again clears it.
    */
   applyColor(cells, colorIndex) {
     const targets = [...cells];
     if (!targets.length || colorIndex < 0) return false;
     const b = 1 << colorIndex;
     return this._transaction(() => {
-      // Toggle off only when every selected cell already carries the colour.
-      const allSet = targets.every((i) => this.colors[i] & b);
+      // Keep the interaction predictable for single cells and multi-selects:
+      // clicking the active colour clears it; any other click replaces it.
+      const allOnlyThis = targets.every((i) => this.colors[i] === b);
       for (const i of targets) {
-        if (allSet) this.colors[i] &= ~b;
-        else this.colors[i] |= b;
+        this.colors[i] = allOnlyThis ? 0 : b;
       }
     });
   }

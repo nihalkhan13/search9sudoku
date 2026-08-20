@@ -10,46 +10,46 @@
 
 :root {
   /* brand */
-  --purple:        #6b21a8;
-  --purple-dark:   #581c87;
-  --maroon:        #7b1240;
-  --maroon-dark:   #5c0d30;
+  --purple:        #5b5ce2;
+  --purple-dark:   #4547c9;
+  --maroon:        #0f766e;
+  --maroon-dark:   #0b5f58;
 
   /* text */
-  --ink:           #1e1b22;
-  --ink-soft:      #5b5566;
-  --control-ink:   #581c87;   /* text/icons on the pale control chrome */
+  --ink:           #172033;
+  --ink-soft:      #667085;
+  --control-ink:   #303b72;   /* text/icons on the pale control chrome */
 
   /* surfaces */
-  --page:          #f4f2f7;   /* app background */
+  --page:          #f4f7fb;   /* app background */
   --paper:         #ffffff;   /* the grid itself */
   --surface:       #ffffff;   /* cards, dialogs, inputs */
-  --surface-2:     #efeaf6;   /* pale buttons */
-  --surface-3:     #f6f3fa;   /* mode buttons */
-  --hover:         #e3d9f2;
-  --border-soft:   #e2dced;
-  --divider:       #f0edf5;
+  --surface-2:     #eef1ff;   /* pale buttons */
+  --surface-3:     #f8fafc;   /* mode buttons */
+  --hover:         #e4e8ff;
+  --border-soft:   #e3e8f1;
+  --divider:       #edf0f5;
   --overlay-bg:    rgba(255, 255, 255, .88);
 
   /* rules box */
-  --green:         #b6e8a0;
-  --green-ink:     #2f5d1c;
+  --green:         #dff7ee;
+  --green-ink:     #0f766e;
 
   /* grid */
-  --line:          #cfcbd8;
-  --line-strong:   #17141c;
-  --arrow-grey:    #c9c9cf;
-  --arrow-selected:#d7b94e;
-  --given-ink:     #1e1b22;
-  --entry-ink:     #2f6fd0;
+  --line:          #d8dfeb;
+  --line-strong:   #172033;
+  --arrow-grey:    #b8c1d1;
+  --arrow-selected:#e09f3e;
+  --given-ink:     #172033;
+  --entry-ink:     #4557c9;
 
   /* Cell states are translucent on purpose: they paint above the user's own
      cell colours, so an opaque fill would erase a colour the player chose. */
-  --cell-selected: rgba(255, 214, 90, .82);
-  --cell-peer:     rgba(210, 205, 230, .58);
-  --cell-same:     rgba(150, 196, 255, .52);
-  --cell-target:   rgba(255, 158, 209, .48);
-  --selection-ring:rgba(198, 150, 10, .95);
+  --cell-selected: rgba(255, 210, 96, .78);
+  --cell-peer:     rgba(205, 214, 236, .58);
+  --cell-same:     rgba(151, 190, 255, .48);
+  --cell-target:   rgba(242, 170, 214, .42);
+  --selection-ring:rgba(224, 159, 62, .98);
   --error:         #d92b4b;
   --error-soft:    #ffe0e5;
   --error-blend:   multiply;
@@ -57,45 +57,45 @@
   /* how strongly user-applied cell colours paint */
   --color-opacity: 1;
 
-  --radius:        12px;
-  --shadow:        0 2px 6px rgba(24, 18, 34, .10), 0 8px 28px rgba(24, 18, 34, .08);
+  --radius:        16px;
+  --shadow:        0 10px 30px rgba(34, 52, 84, .10), 0 2px 8px rgba(34, 52, 84, .06);
 }
 
 :root[data-theme="dark"] {
-  --purple:        #7c3fc4;
-  --purple-dark:   #9556de;   /* lighter than --purple: hover brightens in dark */
-  --maroon:        #8a1849;
-  --maroon-dark:   #6b1038;
+  --purple:        #818cf8;
+  --purple-dark:   #a5b4fc;   /* lighter than --purple: hover brightens in dark */
+  --maroon:        #2dd4bf;
+  --maroon-dark:   #14b8a6;
 
-  --ink:           #ecebf2;
-  --ink-soft:      #a49db2;
-  --control-ink:   #cbb0f2;
+  --ink:           #eef2ff;
+  --ink-soft:      #a6afc4;
+  --control-ink:   #c7d2fe;
 
-  --page:          #15131b;
-  --paper:         #221f2b;
-  --surface:       #221f2b;
-  --surface-2:     #2d2837;
-  --surface-3:     #272232;
-  --hover:         #3a3348;
-  --border-soft:   #383243;
-  --divider:       #322c3d;
-  --overlay-bg:    rgba(21, 19, 27, .88);
+  --page:          #0c1220;
+  --paper:         #161f33;
+  --surface:       #141d30;
+  --surface-2:     #1b2740;
+  --surface-3:     #182238;
+  --hover:         #263454;
+  --border-soft:   #2e3b58;
+  --divider:       #26324b;
+  --overlay-bg:    rgba(12, 18, 32, .88);
 
-  --green:         #274a19;
-  --green-ink:     #bfeaa9;
+  --green:         #123b3b;
+  --green-ink:     #7ee7d1;
 
-  --line:          #3c3648;
-  --line-strong:   #9a92ad;
-  --arrow-grey:    #46404f;
-  --arrow-selected:#9c7f2c;
-  --given-ink:     #f3f1f8;
-  --entry-ink:     #7fb0ff;
+  --line:          #33415f;
+  --line-strong:   #aab7d2;
+  --arrow-grey:    #56647e;
+  --arrow-selected:#f2bd63;
+  --given-ink:     #f7f9ff;
+  --entry-ink:     #a7b7ff;
 
-  --cell-selected: rgba(168, 132, 32, .68);
-  --cell-peer:     rgba(104, 96, 128, .38);
-  --cell-same:     rgba(54, 108, 178, .52);
-  --cell-target:   rgba(158, 62, 130, .5);
-  --selection-ring:rgba(226, 186, 74, .9);
+  --cell-selected: rgba(224, 159, 62, .6);
+  --cell-peer:     rgba(101, 120, 162, .34);
+  --cell-same:     rgba(61, 103, 190, .46);
+  --cell-target:   rgba(171, 79, 161, .42);
+  --selection-ring:rgba(242, 189, 99, .95);
   --error:         #ff7089;
   --error-soft:    #58202c;
   --error-blend:   screen;
@@ -104,7 +104,7 @@
      unreadable, so they paint as tints instead. */
   --color-opacity: .42;
 
-  --shadow:        0 2px 6px rgba(0, 0, 0, .40), 0 8px 28px rgba(0, 0, 0, .32);
+  --shadow:        0 16px 42px rgba(0, 0, 0, .34), 0 2px 10px rgba(0, 0, 0, .24);
 }
 
 * { box-sizing: border-box; }
@@ -112,10 +112,20 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--page);
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(91, 92, 226, .10), transparent 32rem),
+    radial-gradient(circle at 100% 14%, rgba(15, 118, 110, .08), transparent 28rem),
+    var(--page);
   color: var(--ink);
-  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-tap-highlight-color: transparent;
+}
+
+button, input, select { font: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--purple) 72%, white);
+  outline-offset: 3px;
 }
 
 /* Theme changes animate so the switch does not feel like a page reload. */
@@ -142,11 +152,11 @@ kbd {
 .app {
   display: grid;
   grid-template-columns: minmax(320px, 1fr) minmax(340px, 420px);
-  gap: clamp(16px, 3vw, 40px);
+  gap: clamp(20px, 3.5vw, 52px);
   align-items: start;
-  max-width: 1400px;
+  max-width: 1480px;
   margin: 0 auto;
-  padding: clamp(12px, 2.5vw, 32px);
+  padding: clamp(16px, 3vw, 40px);
 }
 
 .board-pane { min-width: 0; }
@@ -177,11 +187,12 @@ kbd {
 .board-wrap {
   position: relative;
   width: 100%;
-  max-width: min(82vh, 700px);
+  max-width: min(82vh, 720px);
   aspect-ratio: 1 / 1;
   margin: 0 auto;
   background: var(--paper);
-  border-radius: 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 24px;
   box-shadow: var(--shadow);
   touch-action: none;          /* let drag-select work on touch devices */
   user-select: none;
@@ -345,10 +356,10 @@ kbd {
 }
 
 .board-hint {
-  margin: 14px auto 0;
-  max-width: min(82vh, 700px);
+  margin: 16px auto 0;
+  max-width: min(82vh, 720px);
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--ink-soft);
 }
 
@@ -365,7 +376,7 @@ kbd {
   gap: 14px;
   background: var(--overlay-bg);
   backdrop-filter: blur(2px);
-  border-radius: 6px;
+  border-radius: 24px;
   font-weight: 600;
   color: var(--control-ink);
 }
@@ -385,7 +396,7 @@ kbd {
 .control-pane {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
 }
 
@@ -393,67 +404,71 @@ kbd {
 
 .banner {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: stretch;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .18));
+  overflow: visible;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 .banner-body {
-  flex: 1;
-  padding: 14px 18px;
-  background: linear-gradient(180deg, var(--maroon) 0%, var(--maroon-dark) 100%);
-  color: #fff;
-  text-align: center;
-  border-radius: 4px;
+  min-width: 0;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--purple) 12%, var(--surface)), var(--surface));
+  color: var(--ink);
+  text-align: left;
+  border-radius: 18px 0 0 18px;
 }
 .banner h1 {
   margin: 0;
-  font-size: clamp(19px, 2.3vw, 25px);
+  font-size: clamp(20px, 2.3vw, 27px);
   font-weight: 700;
-  font-style: italic;
-  letter-spacing: .3px;
+  letter-spacing: -.04em;
 }
 .banner-sub {
-  margin: 4px 0 0;
-  font-size: 13px;
-  font-style: italic;
-  opacity: .88;
+  margin: 7px 0 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+  letter-spacing: .03em;
 }
 .banner-actions {
-  position: absolute;
-  right: 12px;
-  top: 10px;
+  position: static;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border-left: 1px solid var(--border-soft);
+  border-radius: 0 18px 18px 0;
+  background: var(--surface);
 }
 .banner-user, .banner-leaderboard {
-  border: 1px solid rgba(255,255,255,.28);
+  min-height: 44px;
+  border: 1px solid var(--border-soft);
   border-radius: 999px;
-  padding: 6px 9px;
-  background: rgba(0,0,0,.16);
-  color: #fff;
+  padding: 8px 13px;
+  background: var(--surface-2);
+  color: var(--control-ink);
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
-.banner-user:hover, .banner-leaderboard:hover { background: rgba(0,0,0,.28); }
+.banner-user:hover { background: var(--hover); }
+.banner-leaderboard { background: var(--purple); border-color: var(--purple); color: #fff; }
+.banner-leaderboard:hover { background: var(--purple-dark); }
 .avatar-dot { color: #ffd166; margin-right: 4px; }
 /* The folded-ribbon ends. */
-.banner-notch {
-  width: 18px;
-  align-self: center;
-  height: 70%;
-  background: var(--maroon-dark);
-}
-.banner-notch-left  { clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%); }
-.banner-notch-right { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 40% 50%); }
+.banner-notch { display: none; }
 
 /* --- rules --- */
 
 .rules-box {
-  padding: 11px 15px;
-  background: var(--green);
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--green));
+  border: 1px solid color-mix(in srgb, var(--green-ink) 18%, var(--border-soft));
   border-radius: var(--radius);
   font-size: 14px;
   line-height: 1.42;
@@ -468,16 +483,21 @@ kbd {
   display: flex;
   gap: 7px;
   flex-wrap: wrap;
+  padding: 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 4px 16px rgba(34, 52, 84, .05);
 }
 .icon-btn {
   position: relative;
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: 1px solid var(--border-soft);
   border-radius: 10px;
-  background: var(--surface-2);
+  background: transparent;
   color: var(--control-ink);
   cursor: pointer;
   transition: background .12s, transform .08s, opacity .12s;
@@ -506,6 +526,10 @@ kbd {
   grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: stretch;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--surface);
 }
 .digits {
   display: grid;
@@ -515,9 +539,9 @@ kbd {
 .num-btn {
   /* Height tracks the viewport rather than the button's own width, so the
      panel stays inside the fold on short screens. */
-  height: clamp(44px, 7.6vh, 78px);
+  height: clamp(46px, 7.6vh, 78px);
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--purple);
   color: #fff;
   font-size: clamp(19px, 2.6vh, 27px);
@@ -553,7 +577,7 @@ kbd {
   display: grid;
   place-items: center;
   gap: 2px;
-  width: 82px;
+  width: 84px;
   padding: 6px 4px;
   border: 2px solid var(--border-soft);
   border-radius: 12px;
@@ -618,7 +642,7 @@ kbd {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 40px;
+  min-height: 46px;
   border: 1px solid var(--border-soft);
   border-radius: 10px;
   background: var(--surface-2);
@@ -671,7 +695,7 @@ kbd {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 42px;
+  min-height: 46px;
   padding: 0 16px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -701,11 +725,11 @@ kbd {
 /* --- stats --- */
 
 .stats-bar {
-  padding: 12px 14px;
+  padding: 16px;
   background: var(--surface);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: 0 6px 22px rgba(34, 52, 84, .07);
 }
 .timer-block { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .timer {
@@ -737,7 +761,7 @@ kbd {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
   padding-top: 10px;
   border-top: 1px solid var(--divider);
@@ -792,6 +816,8 @@ kbd {
 
 .dlg {
   width: min(94vw, 520px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
   padding: 24px 26px 20px;
   border: none;
   border-radius: 16px;
@@ -867,6 +893,18 @@ kbd {
 .friend-add .action-btn { flex: 0 0 auto; width: auto; margin-top: 0; }
 .leaderboard-note { margin: 12px 0 0; color: var(--ink-soft); font-size: 11.5px; line-height: 1.45; }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .dlg-victory { text-align: center; }
 .victory-mark {
   width: 62px;
@@ -900,20 +938,23 @@ kbd {
   }
   .board-wrap { max-width: min(96vw, 560px); }
   .board-hint { display: none; }
-  .control-pane { gap: 12px; }
+  .control-pane { gap: 14px; }
+}
+
+@media (min-width: 981px) {
+  .banner { position: sticky; top: 0; z-index: 10; }
 }
 
 @media (max-width: 460px) {
   .app { padding: 10px; gap: 12px; }
   .mode-btn { width: 68px; }
-  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-grid { grid-template-columns: repeat(3, 1fr); gap: 12px 8px; }
   .action-row { flex-wrap: wrap; }
   .field { flex-basis: 100%; }
-  .banner-actions { position: static; justify-content: center; padding: 0 0 8px; background: var(--maroon-dark); }
-  .banner { flex-direction: column; }
-  .banner-body { border-radius: 4px 4px 0 0; padding-bottom: 10px; }
-  .banner-notch { display: none; }
-  .banner-user, .banner-leaderboard { font-size: 10.5px; }
+  .banner { grid-template-columns: 1fr; }
+  .banner-body { border-radius: 18px 18px 0 0; padding-bottom: 14px; }
+  .banner-actions { border-top: 1px solid var(--border-soft); border-left: 0; border-radius: 0 0 18px 18px; padding: 10px 12px 12px; }
+  .banner-user, .banner-leaderboard { flex: 1; font-size: 11.5px; }
   .history-bar { gap: 6px; }
   .pill-btn { font-size: 12px; }
   .check-counter { font-size: 9px; }

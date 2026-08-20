@@ -15,6 +15,7 @@ import {
 } from '../js/core/Generator.js';
 import { createRng, dailyDifficulty } from '../js/core/rng.js';
 import { scoreCompare } from '../js/services/StorageService.js';
+import { GameEngine } from '../js/core/GameEngine.js';
 
 let failures = 0;
 function check(name, cond, detail = '') {
@@ -193,6 +194,14 @@ console.log('\n=== 9. Product rules ===');
   const checked = { timeMs: 1000, checkCount: 1 };
   check('no-check score outranks a faster checked score', scoreCompare(clean, checked) < 0);
   check('when both scores use checks, fastest time wins', scoreCompare({ timeMs: 1000, checkCount: 2 }, { timeMs: 2000, checkCount: 1 }) < 0);
+}
+
+console.log('\n=== 10. Colour tool behavior ===');
+{
+  const engine = new GameEngine();
+  check('first swatch applies to a tile', engine.applyColor(new Set([0]), 0) && engine.colors[0] === 1);
+  check('second swatch replaces the first', engine.applyColor(new Set([0]), 1) && engine.colors[0] === 2);
+  check('clicking the active swatch clears the tile', engine.applyColor(new Set([0]), 1) && engine.colors[0] === 0);
 }
 
 console.log(`\n${failures === 0 ? 'ALL TESTS PASSED' : `${failures} TEST(S) FAILED`}\n`);

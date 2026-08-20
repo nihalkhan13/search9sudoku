@@ -665,7 +665,9 @@ export class UIController {
 
   _renderControls() {
     for (const btn of this.dom.modeButtons) {
-      btn.classList.toggle('is-active', btn.dataset.mode === this.mode);
+      const active = btn.dataset.mode === this.mode;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', String(active));
     }
     // In colour mode the digit keys become swatches.
     const colorMode = this.mode === MODE.COLOR;

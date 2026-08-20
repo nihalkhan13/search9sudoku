@@ -38,7 +38,7 @@
         <p id="overlay-text">Generating puzzle...</p>
       </div>
     </div>
-    <p class="board-hint">
+    <p class="board-hint" aria-live="polite">
       Click or drag to select · <kbd>1</kbd>–<kbd>9</kbd> to enter ·
       <kbd>Shift</kbd>+digit for corner marks · <kbd>Ctrl</kbd>+digit for centre marks
     </p>
@@ -120,19 +120,19 @@
       </div>
 
       <div class="modes">
-        <button class="mode-btn is-active" data-mode="normal" title="Normal entry (Z)">
+        <button class="mode-btn is-active" type="button" data-mode="normal" title="Normal entry (Z)" aria-pressed="true">
           <span class="mode-glyph mode-glyph-normal">9</span>
           <span class="mode-label">Normal</span>
         </button>
-        <button class="mode-btn" data-mode="corner" title="Corner marks (X or Shift+digit)">
+        <button class="mode-btn" type="button" data-mode="corner" title="Corner marks (X or Shift+digit)" aria-pressed="false">
           <span class="mode-glyph mode-glyph-corner"><i>1</i><i>2</i><i>3</i></span>
           <span class="mode-label">Corner</span>
         </button>
-        <button class="mode-btn" data-mode="center" title="Centre marks (C or Ctrl+digit)">
+        <button class="mode-btn" type="button" data-mode="center" title="Centre marks (C or Ctrl+digit)" aria-pressed="false">
           <span class="mode-glyph mode-glyph-center">12</span>
           <span class="mode-label">Centre</span>
         </button>
-        <button class="mode-btn" data-mode="color" title="Colour highlight (V)">
+        <button class="mode-btn" type="button" data-mode="color" title="Colour highlight (V)" aria-pressed="false">
           <span class="mode-glyph mode-glyph-color" aria-hidden="true"></span>
           <span class="mode-label">Colour</span>
         </button>
@@ -181,7 +181,7 @@
         <span class="timer" id="timer-display">00:00</span>
         <button class="mini-btn" id="btn-timer-toggle">Play</button>
       </div>
-      <p class="status-line" id="status-line">&nbsp;</p>
+      <p class="status-line" id="status-line" aria-live="polite">&nbsp;</p>
       <div class="stat-grid">
         <div class="stat"><span id="stat-solved">0</span><label>Solved</label></div>
         <div class="stat"><span id="stat-best">--:--</span><label>Best</label></div>
@@ -271,6 +271,7 @@
   </div>
   <div id="leaderboard-body"><p class="empty-state">Loading scores…</p></div>
   <div class="friend-add">
+    <label class="sr-only" for="friend-username">Friend's username</label>
     <input id="friend-username" placeholder="Friend's username" maxlength="24">
     <button class="action-btn" id="btn-add-friend" type="button">Add friend</button>
   </div>
