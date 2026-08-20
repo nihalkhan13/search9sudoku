@@ -70,6 +70,7 @@
         Each arrow points to the digit <strong>9</strong> in its row or column.
         The digit in the arrow's cell is the distance from that cell to the 9.
       </p>
+      <button class="rules-visual-btn" id="btn-visual-tutorial" type="button">See a visual walkthrough <span aria-hidden="true">↗</span></button>
     </div>
 
     <!-- Utility bar -->
@@ -212,6 +213,7 @@
     of that row sits exactly three cells to its right. An arrow cell can never contain a 9,
     since the distance would be zero.
   </p>
+  <button class="action-btn action-primary" id="btn-visual-tutorial-from-rules" type="button">Show visual walkthrough</button>
   <h3>Controls</h3>
   <ul class="rule-list">
     <li>Click, or click-and-drag, to select cells. <kbd>Shift</kbd> or <kbd>Ctrl</kbd> extends the selection.</li>
@@ -221,6 +223,59 @@
     <li><kbd>H</kbd> hides or shows your cell colours (they are kept, not erased) · <kbd>D</kbd> toggles dark mode.</li>
   </ul>
   <button class="action-btn action-primary" data-close-dialog>Got it</button>
+</dialog>
+
+<dialog id="dialog-tutorial" class="dlg dlg-tutorial">
+  <div class="tutorial-heading">
+    <div>
+      <p class="tutorial-eyebrow">Visual guide</p>
+      <h2>See it in action</h2>
+    </div>
+    <span class="tutorial-badge" aria-hidden="true">9</span>
+  </div>
+  <p class="dialog-lede">Every arrow tells you where to look. Use the distance to place the digit, then finish the Sudoku normally.</p>
+
+  <div class="tutorial-steps">
+    <article class="tutorial-step">
+      <div class="tutorial-step-title"><span>01</span><h3>Follow the arrow</h3></div>
+      <div class="tutorial-shot" role="img" aria-label="An arrow points right toward a highlighted 9 two cells away">
+        <div class="tutorial-board">
+          <span class="tutorial-cell tutorial-arrow">→</span><span class="tutorial-cell"></span><span class="tutorial-cell tutorial-target">9</span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
+          <span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
+          <span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
+        </div>
+        <span class="tutorial-callout">2 cells away</span>
+      </div>
+      <p>The arrow points right, so search along that row for the <strong>9</strong>.</p>
+    </article>
+
+    <article class="tutorial-step">
+      <div class="tutorial-step-title"><span>02</span><h3>Enter the distance</h3></div>
+      <div class="tutorial-shot" role="img" aria-label="The arrow cell contains the digit 2 because the 9 is two cells away">
+        <div class="tutorial-board tutorial-board-entered">
+          <span class="tutorial-cell tutorial-arrow">→<b>2</b></span><span class="tutorial-cell"></span><span class="tutorial-cell tutorial-target">9</span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
+          <span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
+          <span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
+        </div>
+        <div class="tutorial-keypad" aria-hidden="true"><span>1</span><span class="is-picked">2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+      </div>
+      <p>Because the 9 is <strong>two</strong> cells away, enter <strong>2</strong> in the arrow cell.</p>
+    </article>
+
+    <article class="tutorial-step">
+      <div class="tutorial-step-title"><span>03</span><h3>Complete and check</h3></div>
+      <div class="tutorial-shot tutorial-shot-finish" role="img" aria-label="A nearly completed Sudoku board with a check button and timer">
+        <div class="tutorial-mini-board">
+          <span>5</span><span>3</span><span class="is-highlight">·</span><span>6</span><span>7</span><span>·</span><span>9</span><span>1</span><span>·</span>
+          <span>6</span><span>·</span><span>·</span><span>1</span><span>9</span><span>5</span><span>·</span><span>·</span><span>·</span>
+          <span>·</span><span>9</span><span>8</span><span>·</span><span>·</span><span>·</span><span>·</span><span>6</span><span>·</span>
+        </div>
+        <div class="tutorial-finish-controls"><span>00:42</span><b>Check</b><small>0 checks</small></div>
+      </div>
+      <p>Use <strong>Check</strong> when the grid is full. Clean solves rank ahead of checked solves.</p>
+    </article>
+  </div>
+  <button class="action-btn action-primary" data-close-dialog>Close walkthrough</button>
 </dialog>
 
 <dialog id="dialog-settings" class="dlg">

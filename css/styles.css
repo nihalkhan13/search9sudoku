@@ -476,6 +476,22 @@ kbd {
 }
 .rules-box p { margin: 0 0 6px; }
 .rules-box p:last-child { margin-bottom: 0; }
+.rules-visual-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 7px 11px;
+  border: 1px solid color-mix(in srgb, var(--green-ink) 24%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  color: var(--green-ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.rules-visual-btn:hover { background: var(--surface); }
 
 /* --- utility bar --- */
 
@@ -841,6 +857,38 @@ kbd {
   font-size: 14px;
   line-height: 1.5;
 }
+
+.tutorial-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.tutorial-eyebrow { margin: 0 0 3px; color: var(--purple); font-size: 10px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; }
+.tutorial-badge { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; background: var(--green); color: var(--green-ink); font-size: 24px; font-weight: 850; }
+.tutorial-steps { display: grid; gap: 12px; }
+.tutorial-step { padding: 13px; border: 1px solid var(--border-soft); border-radius: 14px; background: var(--surface-2); }
+.tutorial-step-title { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+.tutorial-step-title span { color: var(--purple); font-size: 11px; font-weight: 850; letter-spacing: .6px; }
+.tutorial-step-title h3 { margin: 0; font-size: 15px; }
+.tutorial-shot { display: flex; align-items: center; justify-content: center; gap: 15px; min-height: 126px; padding: 12px; border-radius: 11px; background: color-mix(in srgb, var(--control-ink) 90%, #18243d); color: #f6f8ff; }
+.tutorial-board { display: grid; grid-template-columns: repeat(5, 24px); grid-template-rows: repeat(3, 24px); border: 2px solid #bac8e5; }
+.tutorial-cell { display: grid; place-items: center; border-right: 1px solid rgba(186, 200, 229, .26); border-bottom: 1px solid rgba(186, 200, 229, .26); color: #8c9ab7; font-size: 13px; font-weight: 800; }
+.tutorial-cell:nth-child(5n) { border-right: 0; }
+.tutorial-cell:nth-last-child(-n + 5) { border-bottom: 0; }
+.tutorial-cell.tutorial-arrow { color: #ffd166; font-size: 19px; background: rgba(255, 209, 102, .14); }
+.tutorial-cell.tutorial-target { color: #fff; background: rgba(133, 224, 192, .22); font-size: 16px; }
+.tutorial-cell b { margin-left: -2px; color: #fff; font-size: 12px; }
+.tutorial-callout { color: #a8e8d1; font-size: 11px; font-weight: 750; white-space: nowrap; }
+.tutorial-keypad { display: grid; grid-template-columns: repeat(3, 23px); gap: 4px; }
+.tutorial-keypad span { display: grid; place-items: center; width: 23px; height: 23px; border: 1px solid rgba(186, 200, 229, .32); border-radius: 5px; color: #bdc9df; font-size: 10px; }
+.tutorial-keypad span.is-picked { border-color: #ffd166; background: #ffd166; color: #343047; font-weight: 850; }
+.tutorial-step p { margin: 10px 0 0; color: var(--ink-soft); font-size: 12.5px; line-height: 1.45; }
+.tutorial-mini-board { display: grid; grid-template-columns: repeat(9, 17px); grid-auto-rows: 17px; border: 2px solid #bac8e5; }
+.tutorial-mini-board span { display: grid; place-items: center; border-right: 1px solid rgba(186, 200, 229, .22); border-bottom: 1px solid rgba(186, 200, 229, .22); color: #dce4f5; font-size: 8px; font-weight: 800; }
+.tutorial-mini-board span:nth-child(3n) { border-right-color: rgba(186, 200, 229, .72); }
+.tutorial-mini-board span:nth-child(9n) { border-right: 0; }
+.tutorial-mini-board span:nth-last-child(-n + 9) { border-bottom: 0; }
+.tutorial-mini-board span.is-highlight { color: #ffd166; }
+.tutorial-finish-controls { display: grid; gap: 4px; min-width: 62px; text-align: center; }
+.tutorial-finish-controls span { color: #fff; font-size: 13px; font-variant-numeric: tabular-nums; }
+.tutorial-finish-controls b { padding: 5px 7px; border-radius: 6px; background: #8a7cf2; color: #fff; font-size: 11px; }
+.tutorial-finish-controls small { color: #a8e8d1; font-size: 9px; }
 
 .switch {
   display: flex;

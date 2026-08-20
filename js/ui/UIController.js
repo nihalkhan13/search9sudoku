@@ -289,6 +289,11 @@ export class UIController {
     });
     on('btn-fullscreen', () => this.toggleFullscreen());
     on('btn-rules', () => this.openDialog('dialog-rules'));
+    on('btn-visual-tutorial', () => this.openDialog('dialog-tutorial'));
+    on('btn-visual-tutorial-from-rules', () => {
+      document.getElementById('dialog-rules')?.close();
+      this.openDialog('dialog-tutorial');
+    });
     on('btn-settings', () => this.openDialog('dialog-settings'));
     on('btn-stats', () => this.actions.openStats());
     on('btn-user', () => this.openDialog('dialog-auth'));
