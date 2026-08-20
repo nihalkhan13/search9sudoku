@@ -137,47 +137,17 @@ this determinism.
 
 ## Taking it online
 
-The client is already structured so that adding a backend means changing configuration,
-not rewriting features.
+The project now includes a Vercel-ready online layer:
 
-**1. Point the client at an API.** In `js/services/ApiService.js`:
+- `api/` contains account, daily puzzle, score, leaderboard, and friends endpoints.
+- `supabase/schema.sql` creates the durable users, scores, and friendships tables.
+- `vercel.json` configures the zero-build deployment.
+- `DEPLOY.md` walks through GitHub, Supabase, and Vercel setup.
 
-```js
-export const API_BASE = '/api';   // currently null
-```
-
-Every method already tries the network first and falls back to local generation if the
-request fails, so the app keeps working offline and during deploys.
-
-**2. Implement the routes.** The contract is documented at the top of `ApiService.js` and
-sketched again at the bottom of `server.js`:
-
-| Route | Purpose |
-|---|---|
-| `GET /api/daily?date=YYYY-MM-DD` | today's puzzle |
-| `POST /api/puzzles` | a practice puzzle |
-| `POST /api/scores` | submit a solve time |
-| `GET /api/leaderboard?puzzleId=…` | top times |
-
-Your server can import the same modules directly:
-
-```js
-import { generatePuzzle, serializePuzzle } from './js/core/Generator.js';
-import { isSolved } from './js/core/Solver.js';
-```
-
-**3. Two things to get right in production:**
-
-- **Withhold the solution.** `serializePuzzle` includes the solved grid as its fifth
-  field. Strip it before sending, and let the server grade. `ApiService.hydrate()` already
-  handles a solution-less payload by re-deriving it locally, so Check still works — but on
-  a competitive leaderboard you would grade server-side instead.
-- **Never trust a reported time.** Re-run `isSolved(grid, arrows)` on the submitted grid
-  before writing a leaderboard row.
-
-**4. User accounts.** `StorageService` is the only module that touches `localStorage`.
-Give it the same method signatures backed by `fetch` and stats/streaks become
-server-side with no changes anywhere else.
+The browser remains local-first while those services are unconfigured. Once the
+three server-only Vercel variables are set (`SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, and `SESSION_SECRET`), username accounts, verified
+daily scores, global rankings, and friends leaderboards work across devices.
 
 ---
 
