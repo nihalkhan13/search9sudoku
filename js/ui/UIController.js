@@ -36,6 +36,7 @@ export class UIController {
     this.mode = MODE.NORMAL;
     this.selection = new Set();
     this.cursor = 40; // centre cell, drives keyboard navigation
+    this.focusedDigit = 0;
     this.dragging = false;
     this.dragAdditive = false;
     this.cells = [];
@@ -51,6 +52,7 @@ export class UIController {
 
     this.engine.on('change', ({ reason }) => {
       if (reason === 'move') this.showErrors = false;
+      if (this.selection.size === 1) this.focusedDigit = this.engine.values[[...this.selection][0]];
       this.render();
     });
   }
@@ -190,7 +192,9 @@ export class UIController {
       const i = this._cellFromEvent(e);
       if (i < 0) return;
       e.preventDefault();
+      this.dom.grid.setPointerCapture?.(e.pointerId);
       this.dragging = true;
+      this.hoverDigit = null;
 
       const additive = e.shiftKey || e.ctrlKey || e.metaKey;
       // A second tap on the same cell toggles the selection off. This is
@@ -199,6 +203,7 @@ export class UIController {
       if (!additive && this.selection.size === 1 && this.selection.has(i)) {
         this.selection.clear();
         this.dragAdditive = false;
+        this.focusedDigit = 0;
         this.cursor = i;
         this.render();
         return;
@@ -213,6 +218,7 @@ export class UIController {
         this.dragAdditive = true;
       }
       this.cursor = i;
+      this.focusedDigit = this.selection.size === 1 ? this.engine.values[i] : 0;
       this.render();
     };
 
@@ -229,6 +235,7 @@ export class UIController {
         this.selection.delete(i);
       }
       this.cursor = i;
+      this.focusedDigit = this.selection.size === 1 ? this.engine.values[i] : 0;
       this.render();
     };
 
@@ -236,19 +243,20 @@ export class UIController {
       this.dragging = false;
     };
 
-    grid.addEventListener('mousedown', begin);
-    grid.addEventListener('mousemove', extend);
-    window.addEventListener('mouseup', end);
-
-    grid.addEventListener('touchstart', begin, { passive: false });
-    grid.addEventListener('touchmove', extend, { passive: false });
-    window.addEventListener('touchend', end);
+    // Pointer events unify mouse, touch and stylus input. This avoids mobile
+    // browsers delivering a tap as a selection first and a synthetic mouse
+    // event later, which could leave the matching-digit focus one render late.
+    grid.addEventListener('pointerdown', begin);
+    grid.addEventListener('pointermove', extend);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
 
     // Clicking the page outside the board and controls clears the selection.
-    document.addEventListener('mousedown', (e) => {
+    document.addEventListener('pointerdown', (e) => {
       if (e.target.closest('#board-wrap') || e.target.closest('.control-pane')) return;
       if (this.selection.size) {
         this.selection.clear();
+        this.focusedDigit = 0;
         this.render();
       }
     });
@@ -511,6 +519,7 @@ export class UIController {
           return;
         case 'Escape':
           this.selection.clear();
+          this.focusedDigit = 0;
           this.render();
           return;
         case ' ':
@@ -549,6 +558,7 @@ export class UIController {
     this.cursor = indexOf(r, c);
     if (!extend) this.selection.clear();
     this.selection.add(this.cursor);
+    this.focusedDigit = this.engine.values[this.cursor];
     this.render();
   }
 
@@ -630,7 +640,7 @@ export class UIController {
     // Which digit should be highlighted across the board?
     const focusDigit =
       this.hoverDigit ??
-      (this.selection.size === 1 ? engine.values[[...this.selection][0]] : 0);
+      (this.selection.size === 1 ? (this.focusedDigit || engine.values[[...this.selection][0]]) : 0);
 
     // Peers of a single selected cell.
     const peerSet = new Set();
