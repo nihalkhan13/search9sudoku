@@ -939,6 +939,9 @@ kbd {
   .board-wrap { max-width: min(96vw, 560px); }
   .board-hint { display: none; }
   .control-pane { gap: 14px; }
+  /* Put the essential input surface immediately after the board on phones.
+     The rest of the information and utility controls can follow it. */
+  .control-pane .numpad { order: -1; }
 }
 
 @media (min-width: 981px) {
@@ -947,7 +950,28 @@ kbd {
 
 @media (max-width: 460px) {
   .app { padding: 10px; gap: 12px; }
+  .numpad {
+    grid-template-columns: minmax(0, 1fr) minmax(68px, 20%);
+    gap: 6px;
+    padding: 8px;
+  }
+  .digits { gap: 6px; }
+  .num-btn {
+    height: clamp(40px, 11vw, 48px);
+    border-radius: 11px;
+    font-size: 20px;
+  }
+  .num-wide { height: 40px; }
   .mode-btn { width: 68px; }
+  .modes { gap: 6px; }
+  .mode-btn {
+    width: 100%;
+    min-height: 40px;
+    padding: 3px 2px;
+    border-radius: 10px;
+  }
+  .mode-label { font-size: 9px; }
+  .mode-glyph { transform: scale(.88); }
   .stat-grid { grid-template-columns: repeat(3, 1fr); gap: 12px 8px; }
   .action-row { flex-wrap: wrap; }
   .field { flex-basis: 100%; }
