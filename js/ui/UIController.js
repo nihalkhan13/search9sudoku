@@ -193,6 +193,16 @@ export class UIController {
       this.dragging = true;
 
       const additive = e.shiftKey || e.ctrlKey || e.metaKey;
+      // A second tap on the same cell toggles the selection off. This is
+      // especially important on touch screens where there is no empty space
+      // to click in order to clear a number highlight.
+      if (!additive && this.selection.size === 1 && this.selection.has(i)) {
+        this.selection.clear();
+        this.dragAdditive = false;
+        this.cursor = i;
+        this.render();
+        return;
+      }
       if (!additive) this.selection.clear();
       // Ctrl/Cmd on an already-selected cell removes it.
       if ((e.ctrlKey || e.metaKey) && this.selection.has(i)) {
