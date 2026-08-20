@@ -119,6 +119,19 @@ for (const level of Object.keys(DIFFICULTY)) {
   }
 }
 
+console.log('\n=== 3b. Hard puzzle clue floor ===');
+{
+  const hardBatch = Array.from({ length: 18 }, (_, n) => generatePuzzle({ difficulty: 'hard', seed: `hard-audit-${n}` }));
+  check('hard puzzles keep at least six starting digits', hardBatch.every((p) => p.stats.givenCount >= 6));
+  check(
+    'hard puzzles remain uniquely solvable without checks',
+    hardBatch.every((p) => {
+      const result = solve(p.grid, p.arrows, { limit: 2, maxNodes: 1000000 });
+      return result.count === 1 && !result.exhausted && result.solution?.join('') === p.solution.join('');
+    })
+  );
+}
+
 console.log('\n=== 4. Determinism (Daily Puzzle guarantee) ===');
 {
   const a = generatePuzzle({ difficulty: 'medium', seed: '2026-07-30' });

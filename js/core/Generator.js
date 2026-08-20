@@ -54,7 +54,9 @@ export const DIFFICULTY = Object.freeze({
     label: 'Hard',
     stripArrows: true,
     minArrows: 0, // strip as far as uniqueness allows
-    extraGivens: 0, // nothing beyond what uniqueness demands
+    // Keep a few seed digits so hard boards remain approachable without
+    // relying on Check to recover from an ambiguous-looking start.
+    extraGivens: 6,
     boardSamples: 500,
   },
 });
@@ -208,8 +210,8 @@ export function generatePuzzle(opts = {}) {
     }
   }
 
-  // 3. Hand back a few extra digits for the gentler difficulties. Adding
-  //    information can never break uniqueness, so no re-check is needed.
+  // 3. Hand back a few extra digits where configured. Adding information can
+  //    never break uniqueness, so no re-check is needed.
   if (cfg.extraGivens > 0) {
     const spare = cellOrder.filter((i) => !grid[i] && arrows[i] === NO_ARROW);
     const fallbackSpare = cellOrder.filter((i) => !grid[i]);
