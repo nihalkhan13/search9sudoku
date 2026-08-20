@@ -13,7 +13,8 @@ import {
   deserializePuzzle,
   DIFFICULTY,
 } from '../js/core/Generator.js';
-import { createRng, dailyDifficulty } from '../js/core/rng.js';
+import { createRng, dailyDifficulty, todaySeedInTimeZone } from '../js/core/rng.js';
+import { timezoneForLocation } from '../js/core/locations.js';
 import { scoreCompare } from '../js/services/StorageService.js';
 import { GameEngine } from '../js/core/GameEngine.js';
 
@@ -196,7 +197,20 @@ console.log('\n=== 9. Product rules ===');
   check('when both scores use checks, fastest time wins', scoreCompare({ timeMs: 1000, checkCount: 2 }, { timeMs: 2000, checkCount: 1 }) < 0);
 }
 
-console.log('\n=== 10. Colour tool behavior ===');
+console.log('\n=== 10. Location-aware Daily mode ===');
+{
+  const instant = new Date('2026-08-20T06:30:00Z');
+  check('California maps to Pacific time', timezoneForLocation('US', 'CA') === 'America/Los_Angeles');
+  check('New York maps to Eastern time', timezoneForLocation('US', 'NY') === 'America/New_York');
+  check(
+    'same instant can have different state dates',
+    todaySeedInTimeZone('America/Los_Angeles', instant) === '2026-08-19' &&
+      todaySeedInTimeZone('America/New_York', instant) === '2026-08-20'
+  );
+  check('non-US location falls back cleanly', timezoneForLocation('CA', null) === null);
+}
+
+console.log('\n=== 11. Colour tool behavior ===');
 {
   const engine = new GameEngine();
   check('first swatch applies to a tile', engine.applyColor(new Set([0]), 0) && engine.colors[0] === 1);

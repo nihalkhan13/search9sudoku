@@ -66,6 +66,23 @@ export function todaySeed(date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
+/** Calendar date in an IANA timezone, used for location-aware Daily mode. */
+export function todaySeedInTimeZone(timeZone, date = new Date()) {
+  if (!timeZone) return todaySeed(date);
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date);
+    const values = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+  } catch {
+    return todaySeed(date);
+  }
+}
+
 /**
  * Rotate the daily challenge through Easy -> Medium -> Hard.
  * The date is converted to a UTC-safe day number so every player sees the

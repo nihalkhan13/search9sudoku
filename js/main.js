@@ -7,7 +7,8 @@
 
 import { GameEngine } from './core/GameEngine.js';
 import { serializePuzzle, deserializePuzzle, DIFFICULTY } from './core/Generator.js';
-import { todaySeed, dailyDifficulty } from './core/rng.js';
+import { todaySeedInTimeZone, dailyDifficulty } from './core/rng.js';
+import { timezoneForLocation } from './core/locations.js';
 import { storage } from './services/StorageService.js';
 import {
   fetchDailyPuzzle,
@@ -40,6 +41,17 @@ let checkCount = 0;
 let activeUser = currentUser();
 
 const timer = new Timer(() => ui?._renderControls());
+let dailyLoading = false;
+let dailyRolloverTimer = null;
+
+function dailyTimeZone() {
+  return timezoneForLocation(activeUser?.country, activeUser?.state)
+    ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+function currentDailySeed() {
+  return todaySeedInTimeZone(dailyTimeZone());
+}
 
 /* ------------------------------------------------------------------ flow */
 
@@ -71,7 +83,7 @@ function updateHeader() {
 
   if (currentMode === 'daily') {
     title.textContent = 'Daily Puzzle';
-    sub.textContent = `${p.dateSeed ?? todaySeed()} · ${label}`;
+    sub.textContent = `${p.dateSeed ?? currentDailySeed()} · ${label}`;
   } else {
     title.textContent = 'Search Nine Sudoku';
     sub.textContent = `${label} · ${p.stats?.arrowCount ?? 0} arrows · ${p.stats?.givenCount ?? 0} givens`;
@@ -117,14 +129,28 @@ async function newPuzzle(difficulty = 'medium') {
 }
 
 async function dailyPuzzle() {
-  const seed = todaySeed();
-  const difficulty = dailyDifficulty(seed);
-  const puzzle = await withBusy("Loading today's puzzle...", () => fetchDailyPuzzle(seed, difficulty));
-  startPuzzle(puzzle, { mode: 'daily' });
+  if (dailyLoading) return;
+  dailyLoading = true;
+  try {
+    const seed = currentDailySeed();
+    const difficulty = dailyDifficulty(seed);
+    const puzzle = await withBusy("Loading today's puzzle...", () => fetchDailyPuzzle(seed, difficulty));
+    startPuzzle(puzzle, { mode: 'daily' });
 
-  const done = storage.getDailyRecord(seed);
-  if (done) ui.flash(`Already solved today in ${formatTime(done.elapsedMs)}`, 'good');
-  else ui.flash(`Daily puzzle for ${seed} · ${DIFFICULTY[difficulty].label}`, 'neutral');
+    const done = storage.getDailyRecord(seed);
+    const resetLabel = activeUser?.country === 'US' && activeUser?.state ? `${activeUser.state} midnight` : 'your local midnight';
+    if (done) ui.flash(`Already solved today in ${formatTime(done.elapsedMs)} · resets at ${resetLabel}`, 'good');
+    else ui.flash(`Daily puzzle for ${seed} · ${DIFFICULTY[difficulty].label} · resets at ${resetLabel}`, 'neutral');
+  } finally {
+    dailyLoading = false;
+  }
+}
+
+function watchDailyRollover() {
+  clearInterval(dailyRolloverTimer);
+  dailyRolloverTimer = setInterval(() => {
+    if (currentMode === 'daily' && engine.puzzle?.dateSeed !== currentDailySeed()) dailyPuzzle();
+  }, 30_000);
 }
 
 function restart() {
@@ -167,7 +193,7 @@ function onSolved() {
   const elapsed = timer.elapsedMs;
   const difficulty = engine.puzzle.difficulty;
   const isDaily = currentMode === 'daily';
-  const seed = engine.puzzle.dateSeed ?? todaySeed();
+  const seed = engine.puzzle.dateSeed ?? currentDailySeed();
 
   const { stats, isNewBest } = storage.recordSolve(difficulty, elapsed, isDaily, seed, checkCount);
   if (isDaily) storage.markDailyComplete(seed, elapsed);
@@ -318,6 +344,7 @@ async function boot() {
       getCheckCount: () => checkCount,
     },
   });
+  watchDailyRollover();
 
   document.getElementById('btn-victory-new').addEventListener('click', () => {
     document.getElementById('dialog-victory').close();
