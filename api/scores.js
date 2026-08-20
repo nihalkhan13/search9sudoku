@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     const improves = !old || checkCount < old.check_count || (checkCount === old.check_count && timeMs < old.time_ms);
     if (!improves) return send(res, 200, { accepted: false, reason: 'existing score is better' });
 
-    const record = { user_id: user.id, puzzle_id: puzzleId, date_seed: isDaily ? dateSeed : null, difficulty, time_ms: timeMs, check_count: checkCount, grid: String(body.grid) };
+    const record = { user_id: user.id, puzzle_id: puzzleId, puzzle_seed: puzzleSeed, date_seed: isDaily ? dateSeed : null, difficulty, time_ms: timeMs, check_count: checkCount, grid: String(body.grid) };
     const saved = old
       ? await db(`scores?id=eq.${old.id}`, { method: 'PATCH', body: record, headers: { Prefer: 'return=representation' } })
       : await db('scores', { method: 'POST', body: [record], headers: { Prefer: 'return=representation' } });

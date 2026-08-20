@@ -21,6 +21,7 @@ create table if not exists public.scores (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.users(id) on delete cascade,
   puzzle_id text not null,
+  puzzle_seed text,
   date_seed date,
   difficulty text not null check (difficulty in ('easy', 'medium', 'hard')),
   time_ms integer not null check (time_ms > 0),
@@ -31,6 +32,9 @@ create table if not exists public.scores (
 );
 
 create index if not exists scores_puzzle_idx on public.scores (puzzle_id, created_at);
+
+-- Safe migration for scores created before replayable puzzle codes were added.
+alter table public.scores add column if not exists puzzle_seed text;
 
 create table if not exists public.friendships (
   user_id uuid not null references public.users(id) on delete cascade,

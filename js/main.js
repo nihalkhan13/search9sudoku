@@ -279,14 +279,47 @@ async function authLogout() {
 }
 
 async function openLeaderboard(scope = 'global') {
+  let mode = currentMode;
+  let puzzleId = currentMode === 'daily' ? engine.puzzle?.id : null;
+  let difficulty = engine.puzzle?.difficulty;
+  let apiScope = scope;
+
+  // The Daily tab is available from any puzzle, so resolve today's daily
+  // identity before asking the API for its exact board.
+  if (scope === 'daily') {
+    const seed = currentDailySeed();
+    difficulty = dailyDifficulty(seed);
+    const daily = await fetchDailyPuzzle(seed, difficulty);
+    puzzleId = daily.id;
+    mode = 'daily';
+    apiScope = 'global';
+  }
+
   const result = await fetchLeaderboard({
-    puzzleId: currentMode === 'daily' ? engine.puzzle?.id : null,
-    difficulty: engine.puzzle?.difficulty,
-    mode: currentMode,
-    scope,
+    puzzleId,
+    difficulty,
+    mode,
+    scope: apiScope,
     limit: 50,
   });
-  ui.renderLeaderboard(result?.entries ?? [], scope, Boolean(result?.offline), currentMode);
+  const localLabel = activeUser?.country === 'US' && activeUser?.state ? `Local (${activeUser.state})` : 'Local';
+  ui.renderLeaderboard(result?.entries ?? [], scope, Boolean(result?.offline), mode, { localLabel });
+}
+
+async function playLeaderboardPuzzle(entry) {
+  const isDaily = Boolean(entry.isDaily || entry.dateSeed);
+  const seed = entry.puzzleSeed ?? entry.dateSeed;
+  if (!seed) {
+    ui.flash('This older score cannot be replayed yet', 'neutral');
+    return;
+  }
+  const difficulty = entry.difficulty ?? 'medium';
+  const puzzle = isDaily
+    ? await fetchDailyPuzzle(entry.dateSeed, difficulty)
+    : await fetchPracticePuzzle(difficulty, seed);
+  startPuzzle(puzzle, { mode: isDaily ? 'daily' : 'practice' });
+  document.getElementById('dialog-leaderboard')?.close();
+  ui.flash(`Loaded puzzle ${entry.puzzleCode ?? ''}`.trim(), 'good');
 }
 
 async function addFriendByUsername(username) {
@@ -339,7 +372,7 @@ async function boot() {
     settings,
     actions: {
       newPuzzle, dailyPuzzle, restart, share, openStats, onMove, onSolved, onCheck,
-      authLogin, authRegister, authUpdateProfile, authGuest, authLogout, openLeaderboard,
+      authLogin, authRegister, authUpdateProfile, authGuest, authLogout, openLeaderboard, playLeaderboardPuzzle,
       addFriend: addFriendByUsername,
       getCheckCount: () => checkCount,
     },

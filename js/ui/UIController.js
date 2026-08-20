@@ -11,6 +11,7 @@
 import { CELLS, SIZE, NO_ARROW, rowOf, colOf, indexOf } from '../core/constants.js';
 import { MODE } from '../core/GameEngine.js';
 import { COUNTRIES, DEFAULT_COUNTRY, US_STATES } from '../core/locations.js';
+import { puzzleCode } from '../core/puzzleCode.js';
 import { formatTime } from './Timer.js';
 
 /** Palette for the colour tool - index matches numpad keys 1..9. */
@@ -339,6 +340,22 @@ export class UIController {
         this.actions.openLeaderboard?.(btn.dataset.leaderboardScope);
       });
     }
+    this.dom.leaderboardBody?.addEventListener('click', (event) => {
+      const replay = event.target.closest('[data-replay-puzzle]');
+      if (replay) {
+        this.actions.playLeaderboardPuzzle?.({
+          puzzleId: replay.dataset.puzzleId,
+          puzzleSeed: replay.dataset.puzzleSeed || null,
+          dateSeed: replay.dataset.dateSeed || null,
+          difficulty: replay.dataset.difficulty,
+          puzzleCode: replay.dataset.puzzleCode,
+          isDaily: replay.dataset.isDaily === 'true',
+        });
+        return;
+      }
+      const friend = event.target.closest('[data-friend-username]');
+      if (friend) this.actions.addFriend?.(friend.dataset.friendUsername);
+    });
     on('btn-add-friend', () => this.actions.addFriend?.(this.dom.friendUsername?.value));
 
     // Settings checkboxes are declared in HTML with data-setting keys.
@@ -816,6 +833,8 @@ export class UIController {
     this._setLocationControls(this.dom.profileCountry, this.dom.profileState, this.dom.profileStateField, user ?? {});
     if (this.dom.editProfileButton) this.dom.editProfileButton.hidden = !loggedIn || Boolean(user?.guest);
     if (this.dom.profileEditFields) this.dom.profileEditFields.hidden = true;
+    const localTab = document.querySelector('[data-leaderboard-scope="local"]');
+    if (localTab) localTab.textContent = user?.country === 'US' && user?.state ? `Local (${user.state})` : 'Local';
   }
 
   async _submitAuth(action) {
@@ -853,21 +872,32 @@ export class UIController {
     }
   }
 
-  renderLeaderboard(entries, scope = 'global', offline = false, mode = 'daily') {
+  renderLeaderboard(entries, scope = 'global', offline = false, mode = 'daily', options = {}) {
     const body = this.dom.leaderboardBody;
     if (!body) return;
-    const labels = { global: 'Global', local: 'Local device', friends: 'Friends' };
+    const labels = { global: 'Global', local: options.localLabel ?? 'Local', friends: 'Friends', daily: 'Daily' };
     if (this.dom.leaderboardMeta) {
       this.dom.leaderboardMeta.textContent = `${labels[scope] ?? 'Leaderboard'} · ${mode === 'practice' ? 'all practice puzzles' : "today's puzzle"}${offline ? ' · offline preview' : ''}`;
     }
     const title = document.getElementById('leaderboard-title');
-    if (title) title.textContent = mode === 'practice' ? 'Practice leaderboard' : 'Daily leaderboard';
+    if (title) title.textContent = scope === 'daily' || mode !== 'practice' ? 'Daily leaderboard' : 'Practice leaderboard';
     if (!entries.length) {
       body.innerHTML = `<p class="empty-state">No scores yet. Be the first to solve ${mode === 'practice' ? 'a puzzle at this difficulty' : 'today\'s puzzle'}.</p>`;
       return;
     }
-    body.innerHTML = `<table class="leaderboard-table"><thead><tr><th>#</th><th>Player</th><th>Time</th><th>Checks</th></tr></thead><tbody>${entries.map((entry, index) => `
-      <tr class="${entry.checkCount === 0 ? 'is-clean' : ''}"><td>${entry.rank ?? index + 1}</td><td>${escapeHtml(entry.username ?? 'Guest')}</td><td>${formatTime(entry.timeMs)}</td><td>${entry.checkCount ?? 0}</td></tr>`).join('')}</tbody></table>`;
+    body.innerHTML = `<div class="leaderboard-scroll"><table class="leaderboard-table"><thead><tr><th>#</th><th>Puzzle</th><th>Player</th><th>Difficulty</th><th>State</th><th>Time</th><th>Checks</th></tr></thead><tbody>${entries.map((entry, index) => {
+      const code = entry.puzzleCode ?? puzzleCode(entry.puzzleId);
+      const replayable = Boolean(entry.puzzleSeed || entry.dateSeed);
+      const puzzleCell = replayable
+        ? `<button class="leaderboard-code" type="button" data-replay-puzzle data-puzzle-id="${escapeHtml(entry.puzzleId ?? '')}" data-puzzle-seed="${escapeHtml(entry.puzzleSeed ?? '')}" data-date-seed="${escapeHtml(entry.dateSeed ?? '')}" data-difficulty="${escapeHtml(entry.difficulty ?? '')}" data-puzzle-code="${code}" data-is-daily="${Boolean(entry.isDaily || entry.dateSeed)}">${code}</button>`
+        : `<span class="leaderboard-code is-unavailable">${code}</span>`;
+      const player = escapeHtml(entry.username ?? 'Guest');
+      const playerCell = entry.username && entry.username !== 'Guest'
+        ? `<button class="leaderboard-user" type="button" data-friend-username="${player}" title="Add ${player} as a friend">${player}</button>`
+        : player;
+      const location = entry.state ?? entry.country ?? '—';
+      return `<tr class="${Number(entry.checkCount ?? 0) === 0 ? 'is-clean' : ''}"><td>${entry.rank ?? index + 1}</td><td>${puzzleCell}</td><td>${playerCell}</td><td>${escapeHtml(entry.difficulty ?? '—')}</td><td>${escapeHtml(location)}</td><td>${formatTime(entry.timeMs)}</td><td>${entry.checkCount ?? 0}</td></tr>`;
+    }).join('')}</tbody></table></div>`;
   }
 }
 

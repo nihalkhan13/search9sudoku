@@ -17,6 +17,7 @@ import { createRng, dailyDifficulty, todaySeedInTimeZone } from '../js/core/rng.
 import { timezoneForLocation } from '../js/core/locations.js';
 import { scoreCompare } from '../js/services/StorageService.js';
 import { GameEngine } from '../js/core/GameEngine.js';
+import { puzzleCode } from '../js/core/puzzleCode.js';
 
 let failures = 0;
 function check(name, cond, detail = '') {
@@ -210,7 +211,13 @@ console.log('\n=== 10. Location-aware Daily mode ===');
   check('non-US location falls back cleanly', timezoneForLocation('CA', null) === null);
 }
 
-console.log('\n=== 11. Colour tool behavior ===');
+console.log('\n=== 11. Leaderboard replay codes ===');
+{
+  check('puzzle code is four digits', /^\d{4}$/.test(puzzleCode('easy-test')));
+  check('puzzle code is stable', puzzleCode('easy-test') === puzzleCode('easy-test'));
+}
+
+console.log('\n=== 12. Colour tool behavior ===');
 {
   const engine = new GameEngine();
   check('first swatch applies to a tile', engine.applyColor(new Set([0]), 0) && engine.colors[0] === 1);
