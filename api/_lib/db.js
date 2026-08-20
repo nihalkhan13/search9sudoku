@@ -4,6 +4,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
+export const ADMIN_USERNAME = 'thekhanartist';
+
 export function ready() {
   return Boolean(SUPABASE_URL && SUPABASE_KEY && SESSION_SECRET);
 }

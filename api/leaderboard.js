@@ -67,6 +67,8 @@ export default async function handler(req, res) {
               : null);
         return {
           rank: i + 1,
+          scoreId: row.id,
+          userId: row.user_id,
           username: profile.username ?? 'Player',
           country: profile.country ?? null,
           state: profile.state ?? null,

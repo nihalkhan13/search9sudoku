@@ -1,10 +1,11 @@
 import { generatePuzzle } from '../js/core/Generator.js';
 import { isSolved } from '../js/core/Solver.js';
 import { dailyDifficulty } from '../js/core/rng.js';
-import { db, readBody, ready, send, userFromRequest } from './_lib/db.js';
+import { ADMIN_USERNAME, db, readBody, ready, send, userFromRequest } from './_lib/db.js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return send(res, 405, { error: 'POST required' });
+  if (req.method === 'DELETE') return removeScore(req, res);
+  if (req.method !== 'POST') return send(res, 405, { error: 'POST or DELETE required' });
   if (!ready()) return send(res, 503, { error: 'Online scores are not configured yet' });
   const user = userFromRequest(req);
   if (!user) return send(res, 401, { error: 'Sign in to submit a global score' });
@@ -38,6 +39,38 @@ export default async function handler(req, res) {
       ? await db(`scores?id=eq.${old.id}`, { method: 'PATCH', body: record, headers: { Prefer: 'return=representation' } })
       : await db('scores', { method: 'POST', body: [record], headers: { Prefer: 'return=representation' } });
     return send(res, 200, { accepted: true, score: saved?.[0] ?? record });
+  } catch (error) {
+    return send(res, 500, { error: error.message });
+  }
+}
+
+async function removeScore(req, res) {
+  if (!ready()) return send(res, 503, { error: 'Online scores are not configured yet' });
+  const user = userFromRequest(req);
+  if (!user) return send(res, 401, { error: 'Sign in to remove a leaderboard score' });
+
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const scoreId = String(url.searchParams.get('scoreId') ?? '');
+  const puzzleId = String(url.searchParams.get('puzzleId') ?? '');
+  const isAdmin = String(user.username ?? '').toLowerCase() === ADMIN_USERNAME;
+  if ((scoreId && !/^[0-9a-f-]{36}$/i.test(scoreId)) || (puzzleId && !/^[a-zA-Z0-9:_.,-]{1,160}$/.test(puzzleId))) {
+    return send(res, 400, { error: 'That score reference is invalid' });
+  }
+  if (!scoreId && !puzzleId) return send(res, 400, { error: 'scoreId or puzzleId required' });
+
+  try {
+    const filters = [];
+    if (scoreId) filters.push(`id=eq.${scoreId}`);
+    if (puzzleId) filters.push(`puzzle_id=eq.${encodeURIComponent(puzzleId)}`);
+    if (!isAdmin) filters.push(`user_id=eq.${user.id}`);
+    const existing = await db(`scores?select=id,user_id,puzzle_id&${filters.join('&')}&limit=1`);
+    if (!existing?.length) return send(res, 404, { error: 'That leaderboard score was not found' });
+
+    const deleted = await db(`scores?id=eq.${existing[0].id}`, {
+      method: 'DELETE',
+      headers: { Prefer: 'return=representation' },
+    });
+    return send(res, 200, { deleted: true, admin: isAdmin, score: deleted?.[0] ?? existing[0] });
   } catch (error) {
     return send(res, 500, { error: error.message });
   }

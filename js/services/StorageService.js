@@ -257,6 +257,19 @@ export class StorageService {
     return scores;
   }
 
+  removeLocalScore({ scoreId = null, puzzleId = null, userId = null } = {}) {
+    const scores = this._read(KEYS.LOCAL_SCORES, []);
+    const remaining = scores.filter((score) => {
+      if (scoreId && (score.scoreId === scoreId || score.id === scoreId)) return false;
+      if (!puzzleId || score.puzzleId !== puzzleId) return true;
+      if (!userId) return true;
+      return score.userId !== userId;
+    });
+    const deleted = remaining.length !== scores.length;
+    this._write(KEYS.LOCAL_SCORES, remaining);
+    return { deleted, offline: true };
+  }
+
   getLocalScores(puzzleId, scope = 'local', userId = null, filters = {}) {
     const scores = this._read(KEYS.LOCAL_SCORES, []).filter((s) => {
       if (filters.mode === 'practice') return s.dateSeed == null && s.difficulty === filters.difficulty;

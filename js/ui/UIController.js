@@ -353,6 +353,16 @@ export class UIController {
         });
         return;
       }
+      const remove = event.target.closest('[data-remove-score]');
+      if (remove) {
+        this.actions.removeLeaderboardScore?.({
+          scoreId: remove.dataset.scoreId || null,
+          puzzleId: remove.dataset.puzzleId || null,
+          userId: remove.dataset.userId || null,
+          puzzleCode: remove.dataset.puzzleCode || null,
+        });
+        return;
+      }
       const friend = event.target.closest('[data-friend-username]');
       if (friend) this.actions.addFriend?.(friend.dataset.friendUsername);
     });
@@ -893,7 +903,7 @@ export class UIController {
         : `<span class="leaderboard-code is-unavailable">${code}</span>`;
       const player = escapeHtml(entry.username ?? 'Guest');
       const playerCell = entry.username && entry.username !== 'Guest'
-        ? `<button class="leaderboard-user" type="button" data-friend-username="${player}" title="Add ${player} as a friend">${player}</button>`
+        ? `<span class="leaderboard-player-cell"><button class="leaderboard-user" type="button" data-friend-username="${player}" title="Add ${player} as a friend">${player}</button>${(options.isAdmin || (options.viewerId && entry.userId === options.viewerId)) ? `<button class="leaderboard-remove" type="button" data-remove-score data-score-id="${escapeHtml(entry.scoreId ?? '')}" data-puzzle-id="${escapeHtml(entry.puzzleId ?? '')}" data-user-id="${escapeHtml(entry.userId ?? '')}" data-puzzle-code="${escapeHtml(code)}" title="Remove ${player}'s score" aria-label="Remove ${player}'s score">×</button>` : ''}</span>`
         : player;
       const location = entry.state ?? entry.country ?? '—';
       return `<tr class="${Number(entry.checkCount ?? 0) === 0 ? 'is-clean' : ''}"><td>${entry.rank ?? index + 1}</td><td>${puzzleCell}</td><td>${playerCell}</td><td>${escapeHtml(entry.difficulty ?? '—')}</td><td>${escapeHtml(location)}</td><td>${formatTime(entry.timeMs)}</td><td>${entry.checkCount ?? 0}</td></tr>`;

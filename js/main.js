@@ -26,6 +26,7 @@ import {
   submitScore,
   fetchLeaderboard,
   addFriend,
+  removeScore,
 } from './services/CloudService.js';
 import { Timer, formatTime } from './ui/Timer.js';
 import { UIController } from './ui/UIController.js';
@@ -39,6 +40,7 @@ let currentMode = 'practice'; // 'practice' | 'daily'
 let solvedThisRound = false;
 let checkCount = 0;
 let activeUser = currentUser();
+let leaderboardScope = 'global';
 
 const timer = new Timer(() => ui?._renderControls());
 let dailyLoading = false;
@@ -279,6 +281,7 @@ async function authLogout() {
 }
 
 async function openLeaderboard(scope = 'global') {
+  leaderboardScope = scope;
   let mode = currentMode;
   let puzzleId = currentMode === 'daily' ? engine.puzzle?.id : null;
   let difficulty = engine.puzzle?.difficulty;
@@ -303,7 +306,30 @@ async function openLeaderboard(scope = 'global') {
     limit: 50,
   });
   const localLabel = activeUser?.country === 'US' && activeUser?.state ? `Local (${activeUser.state})` : 'Local';
-  ui.renderLeaderboard(result?.entries ?? [], scope, Boolean(result?.offline), mode, { localLabel });
+  ui.renderLeaderboard(result?.entries ?? [], scope, Boolean(result?.offline), mode, {
+    localLabel,
+    viewerId: activeUser?.id,
+    isAdmin: activeUser?.username?.toLowerCase() === 'thekhanartist',
+  });
+}
+
+async function removeLeaderboardScore(entry) {
+  if (!entry?.scoreId && !entry?.puzzleId) return;
+  const label = entry.puzzleCode ? `puzzle ${entry.puzzleCode}` : 'this score';
+  const isAdmin = activeUser?.username?.toLowerCase() === 'thekhanartist';
+  const subject = isAdmin && entry.userId !== activeUser?.id ? "this player's" : 'your';
+  if (!window.confirm(`Remove ${subject} ${label} from the leaderboard?`)) return;
+  const result = await removeScore({ scoreId: entry.scoreId, puzzleId: entry.puzzleId, userId: entry.userId });
+  if (result?._error) {
+    ui.flash(result._error, 'bad');
+    return;
+  }
+  if (!result?.deleted) {
+    ui.flash('That score could not be removed', 'bad');
+    return;
+  }
+  ui.flash('Score removed from the leaderboard', 'good');
+  await openLeaderboard(leaderboardScope);
 }
 
 async function playLeaderboardPuzzle(entry) {
@@ -372,7 +398,7 @@ async function boot() {
     settings,
     actions: {
       newPuzzle, dailyPuzzle, restart, share, openStats, onMove, onSolved, onCheck,
-      authLogin, authRegister, authUpdateProfile, authGuest, authLogout, openLeaderboard, playLeaderboardPuzzle,
+      authLogin, authRegister, authUpdateProfile, authGuest, authLogout, openLeaderboard, playLeaderboardPuzzle, removeLeaderboardScore,
       addFriend: addFriendByUsername,
       getCheckCount: () => checkCount,
     },

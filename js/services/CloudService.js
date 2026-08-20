@@ -107,6 +107,15 @@ export async function addFriend(username) {
   return null;
 }
 
+export async function removeScore({ scoreId, puzzleId, userId } = {}) {
+  const params = new URLSearchParams();
+  if (scoreId) params.set('scoreId', scoreId);
+  if (puzzleId) params.set('puzzleId', puzzleId);
+  const remote = await request(`/scores?${params}`, { method: 'DELETE' });
+  if (remote) return remote;
+  return storage.removeLocalScore({ scoreId, puzzleId, userId });
+}
+
 export async function fetchFriends() {
   const remote = await request('/friends');
   return remote?.friends ?? storage.getLocalFriends();
