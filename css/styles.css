@@ -992,9 +992,16 @@ kbd {
   .board-wrap { max-width: min(96vw, 560px); }
   .board-hint { display: none; }
   .control-pane { gap: 14px; }
-  /* Put the essential input surface immediately after the board on phones.
-     The rest of the information and utility controls can follow it. */
-  .control-pane .numpad { order: -1; }
+  /* On mobile, put the complete input surface directly below the board:
+     utility bar, number/mode pad, then Undo / Redo / Check. */
+  .control-pane > .utility-bar { order: 1; }
+  .control-pane > .numpad { order: 2; }
+  .control-pane > .history-bar { order: 3; }
+  .control-pane > .banner { order: 4; }
+  .control-pane > .rules-box { order: 5; }
+  .control-pane > .actions { order: 6; }
+  .control-pane > .stats-bar { order: 7; }
+  .control-pane > .credit { order: 8; }
 }
 
 @media (min-width: 981px) {
