@@ -229,50 +229,66 @@
   <div class="tutorial-heading">
     <div>
       <p class="tutorial-eyebrow">Visual guide</p>
-      <h2>See it in action</h2>
+      <h2>Learn Search Nine</h2>
     </div>
     <span class="tutorial-badge" aria-hidden="true">9</span>
   </div>
-  <p class="dialog-lede">Every arrow tells you where to look. Use the distance to place the digit, then finish the Sudoku normally.</p>
+  <p class="dialog-lede">Search Nine is regular Sudoku with one extra clue: arrows tell you where the <strong>9</strong> is. Find the 9, count the spaces, and write that distance in the arrow cell.</p>
 
   <div class="tutorial-steps">
     <article class="tutorial-step">
-      <div class="tutorial-step-title"><span>01</span><h3>Follow the arrow</h3></div>
-      <div class="tutorial-shot" role="img" aria-label="An arrow points right toward a highlighted 9 two cells away">
-        <div class="tutorial-board">
-          <span class="tutorial-cell tutorial-arrow">→</span><span class="tutorial-cell"></span><span class="tutorial-cell tutorial-target">9</span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
-          <span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
-          <span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
-        </div>
-        <span class="tutorial-callout">2 cells away</span>
+      <div class="tutorial-step-title"><span>01</span><h3>Find the 9</h3></div>
+      <div class="tutorial-shot tutorial-shot-row" role="img" aria-label="A row shows an arrow pointing right to a 9 four cells away">
+        <div class="tutorial-rule-row"><span class="tutorial-cell tutorial-arrow">→</span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell tutorial-target">9</span></div>
+        <span class="tutorial-callout">count 1 · 2 · 3 · 4</span>
       </div>
-      <p>The arrow points right, so search along that row for the <strong>9</strong>.</p>
+      <p>An arrow always points in a straight line. A right arrow searches its row to the right; a left arrow searches left. Up and down arrows search their column.</p>
     </article>
 
     <article class="tutorial-step">
       <div class="tutorial-step-title"><span>02</span><h3>Enter the distance</h3></div>
-      <div class="tutorial-shot" role="img" aria-label="The arrow cell contains the digit 2 because the 9 is two cells away">
-        <div class="tutorial-board tutorial-board-entered">
-          <span class="tutorial-cell tutorial-arrow">→<b>2</b></span><span class="tutorial-cell"></span><span class="tutorial-cell tutorial-target">9</span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
-          <span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
-          <span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span>
-        </div>
-        <div class="tutorial-keypad" aria-hidden="true"><span>1</span><span class="is-picked">2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+      <div class="tutorial-shot tutorial-shot-row" role="img" aria-label="The arrow cell contains 4 because the 9 is four cells away">
+        <div class="tutorial-rule-row"><span class="tutorial-cell tutorial-arrow">→<b>4</b></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell"></span><span class="tutorial-cell tutorial-target">9</span></div>
+        <div class="tutorial-keypad" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span class="is-picked">4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
       </div>
-      <p>Because the 9 is <strong>two</strong> cells away, enter <strong>2</strong> in the arrow cell.</p>
+      <p>Count from the arrow cell to the 9. Here there are four steps, so enter <strong>4</strong> in the arrow cell. The arrow cell can never contain 9.</p>
     </article>
 
     <article class="tutorial-step">
-      <div class="tutorial-step-title"><span>03</span><h3>Complete and check</h3></div>
-      <div class="tutorial-shot tutorial-shot-finish" role="img" aria-label="A nearly completed Sudoku board with a check button and timer">
-        <div class="tutorial-mini-board">
-          <span>5</span><span>3</span><span class="is-highlight">·</span><span>6</span><span>7</span><span>·</span><span>9</span><span>1</span><span>·</span>
-          <span>6</span><span>·</span><span>·</span><span>1</span><span>9</span><span>5</span><span>·</span><span>·</span><span>·</span>
-          <span>·</span><span>9</span><span>8</span><span>·</span><span>·</span><span>·</span><span>·</span><span>6</span><span>·</span>
+      <div class="tutorial-step-title"><span>03</span><h3>Use normal Sudoku rules</h3></div>
+      <div class="tutorial-shot tutorial-shot-board" role="img" aria-label="A mostly filled Search Nine board with givens, arrows, and highlighted 9s">
+        <div class="tutorial-full-board">
+          <span>5</span><span>3</span><span class="tutorial-cell tutorial-arrow">→<b>4</b></span><span>6</span><span>7</span><span>8</span><span class="tutorial-cell tutorial-target">9</span><span class="tutorial-cell tutorial-arrow">←<b>1</b></span><span>2</span>
+          <span>6</span><span>7</span><span class="tutorial-cell tutorial-arrow">→<b>2</b></span><span>1</span><span class="tutorial-cell tutorial-target">9</span><span>5</span><span>·</span><span>4</span><span>8</span>
+          <span>1</span><span class="tutorial-cell tutorial-target">9</span><span>8</span><span>·</span><span>4</span><span>·</span><span>·</span><span>6</span><span>·</span>
+          <span>8</span><span>·</span><span>·</span><span>7</span><span>6</span><span>·</span><span>4</span><span>·</span><span>3</span>
+          <span>4</span><span>·</span><span>6</span><span>8</span><span>·</span><span>3</span><span>7</span><span>9</span><span>1</span>
+          <span>7</span><span>·</span><span>3</span><span>9</span><span>2</span><span>·</span><span>8</span><span>·</span><span>6</span>
+          <span>9</span><span>6</span><span>·</span><span>5</span><span>3</span><span>7</span><span>2</span><span>8</span><span>·</span>
+          <span>2</span><span>8</span><span>7</span><span>4</span><span>1</span><span>9</span><span>6</span><span>3</span><span>5</span>
+          <span>3</span><span>4</span><span>5</span><span>2</span><span>8</span><span>6</span><span>1</span><span>7</span><span>9</span>
         </div>
-        <div class="tutorial-finish-controls"><span>00:42</span><b>Check</b><small>0 checks</small></div>
       </div>
-      <p>Use <strong>Check</strong> when the grid is full. Clean solves rank ahead of checked solves.</p>
+      <p>Arrows give extra information, but every row, column, and 3×3 box still needs the digits <strong>1–9 exactly once</strong>. Use the arrows together with ordinary Sudoku logic.</p>
+    </article>
+
+    <article class="tutorial-step">
+      <div class="tutorial-step-title"><span>04</span><h3>Finish cleanly</h3></div>
+      <div class="tutorial-shot tutorial-shot-finish" role="img" aria-label="A nearly completed board with a timer, zero checks, and a check button">
+        <div class="tutorial-full-board tutorial-near-finish-board">
+          <span>5</span><span>3</span><span>4</span><span>6</span><span>7</span><span>8</span><span>9</span><span>1</span><span>2</span>
+          <span>6</span><span>7</span><span>2</span><span>1</span><span>9</span><span>5</span><span>3</span><span>4</span><span>·</span>
+          <span>1</span><span>9</span><span>8</span><span>3</span><span>4</span><span>2</span><span>5</span><span>6</span><span>·</span>
+          <span>8</span><span>5</span><span>9</span><span>7</span><span>6</span><span>1</span><span>4</span><span>2</span><span>3</span>
+          <span>4</span><span>2</span><span>6</span><span>8</span><span>5</span><span>3</span><span>7</span><span>9</span><span>1</span>
+          <span>7</span><span>1</span><span>3</span><span>9</span><span>2</span><span>4</span><span>8</span><span>5</span><span>6</span>
+          <span>9</span><span>6</span><span>1</span><span>5</span><span>3</span><span>7</span><span>2</span><span>8</span><span>4</span>
+          <span>2</span><span>8</span><span>7</span><span>4</span><span>1</span><span>9</span><span>6</span><span>3</span><span>5</span>
+          <span>3</span><span>4</span><span>5</span><span>2</span><span>8</span><span>6</span><span>1</span><span>7</span><span>9</span>
+        </div>
+        <div class="tutorial-finish-controls"><span>00:42</span><b>Check</b><small>0 checks · clean solve</small></div>
+      </div>
+      <p>Fill the last cells, then submit. <strong>Check</strong> is optional, and using it counts against your leaderboard score, so a correct no-check solve ranks highest.</p>
     </article>
   </div>
   <button class="action-btn action-primary" data-close-dialog>Close walkthrough</button>
