@@ -84,12 +84,11 @@ export function todaySeedInTimeZone(timeZone, date = new Date()) {
 }
 
 /**
- * Rotate the daily challenge through Easy -> Medium -> Hard.
- * The date is converted to a UTC-safe day number so every player sees the
- * same difficulty even when they are in different time zones.
+ * Keep the daily challenge on Hard.
+ * The date argument remains part of the public API so location-aware daily
+ * seeds and verified score submissions continue to use one shared rule.
  */
 export function dailyDifficulty(dateSeed = todaySeed()) {
-  const [y, m, d] = String(dateSeed).split('-').map(Number);
-  const day = Math.floor(Date.UTC(y, m - 1, d) / 86400000);
-  return ['easy', 'medium', 'hard'][((day % 3) + 3) % 3];
+  void dateSeed;
+  return 'hard';
 }

@@ -199,12 +199,28 @@ console.log('\n=== 8. Performance ===');
   check('hard generation averages under 8s', avg < 8000, `${avg.toFixed(0)}ms`);
 }
 
+console.log('\n=== 3c. Daily puzzle difficulty and solvability ===');
+{
+  const dailySeeds = ['2026-08-20', '2026-08-21', '2026-08-22', '2026-08-23', '2026-08-24', '2026-08-25'];
+  const dailyBatch = dailySeeds.map((seed) => generatePuzzle({ difficulty: dailyDifficulty(seed), seed }));
+  check('daily puzzles are always hard', dailyBatch.every((puzzle) => puzzle.difficulty === 'hard'));
+  check(
+    'daily puzzles are uniquely solvable without checks',
+    dailyBatch.every((puzzle) => {
+      const result = solve(puzzle.grid, puzzle.arrows, { limit: 2, maxNodes: 1000000 });
+      return puzzle.stats.givenCount >= 6 && result.count === 1 && !result.exhausted && result.solution?.join('') === puzzle.solution.join('');
+    })
+  );
+}
+
 console.log('\n=== 9. Product rules ===');
 {
-  check('daily difficulty rotates easy -> medium -> hard',
-    dailyDifficulty('2026-08-17') === 'easy' &&
-    dailyDifficulty('2026-08-18') === 'medium' &&
-    dailyDifficulty('2026-08-19') === 'hard');
+  check(
+    'daily difficulty stays hard on every date',
+    dailyDifficulty('2026-08-17') === 'hard' &&
+    dailyDifficulty('2026-08-18') === 'hard' &&
+    dailyDifficulty('2026-08-19') === 'hard'
+  );
   const clean = { timeMs: 120000, checkCount: 0 };
   const checked = { timeMs: 1000, checkCount: 1 };
   check('no-check score outranks a faster checked score', scoreCompare(clean, checked) < 0);
