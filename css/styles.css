@@ -1,0 +1,929 @@
+/* ==========================================================================
+   Search Nine Sudoku
+   Layout: grid on the left, control panel on the right, stacking on mobile.
+
+   THEMING
+   Every colour the UI paints comes from a token below. :root holds the light
+   values; [data-theme="dark"] overrides the same names, so dark mode needs no
+   component-level rules. index.html sets data-theme before first paint.
+   ========================================================================== */
+
+:root {
+  /* brand */
+  --purple:        #6b21a8;
+  --purple-dark:   #581c87;
+  --maroon:        #7b1240;
+  --maroon-dark:   #5c0d30;
+
+  /* text */
+  --ink:           #1e1b22;
+  --ink-soft:      #5b5566;
+  --control-ink:   #581c87;   /* text/icons on the pale control chrome */
+
+  /* surfaces */
+  --page:          #f4f2f7;   /* app background */
+  --paper:         #ffffff;   /* the grid itself */
+  --surface:       #ffffff;   /* cards, dialogs, inputs */
+  --surface-2:     #efeaf6;   /* pale buttons */
+  --surface-3:     #f6f3fa;   /* mode buttons */
+  --hover:         #e3d9f2;
+  --border-soft:   #e2dced;
+  --divider:       #f0edf5;
+  --overlay-bg:    rgba(255, 255, 255, .88);
+
+  /* rules box */
+  --green:         #b6e8a0;
+  --green-ink:     #2f5d1c;
+
+  /* grid */
+  --line:          #cfcbd8;
+  --line-strong:   #17141c;
+  --arrow-grey:    #c9c9cf;
+  --arrow-selected:#d7b94e;
+  --given-ink:     #1e1b22;
+  --entry-ink:     #2f6fd0;
+
+  /* Cell states are translucent on purpose: they paint above the user's own
+     cell colours, so an opaque fill would erase a colour the player chose. */
+  --cell-selected: rgba(255, 214, 90, .82);
+  --cell-peer:     rgba(210, 205, 230, .58);
+  --cell-same:     rgba(150, 196, 255, .52);
+  --cell-target:   rgba(255, 158, 209, .48);
+  --selection-ring:rgba(198, 150, 10, .95);
+  --error:         #d92b4b;
+  --error-soft:    #ffe0e5;
+  --error-blend:   multiply;
+
+  /* how strongly user-applied cell colours paint */
+  --color-opacity: 1;
+
+  --radius:        12px;
+  --shadow:        0 2px 6px rgba(24, 18, 34, .10), 0 8px 28px rgba(24, 18, 34, .08);
+}
+
+:root[data-theme="dark"] {
+  --purple:        #7c3fc4;
+  --purple-dark:   #9556de;   /* lighter than --purple: hover brightens in dark */
+  --maroon:        #8a1849;
+  --maroon-dark:   #6b1038;
+
+  --ink:           #ecebf2;
+  --ink-soft:      #a49db2;
+  --control-ink:   #cbb0f2;
+
+  --page:          #15131b;
+  --paper:         #221f2b;
+  --surface:       #221f2b;
+  --surface-2:     #2d2837;
+  --surface-3:     #272232;
+  --hover:         #3a3348;
+  --border-soft:   #383243;
+  --divider:       #322c3d;
+  --overlay-bg:    rgba(21, 19, 27, .88);
+
+  --green:         #274a19;
+  --green-ink:     #bfeaa9;
+
+  --line:          #3c3648;
+  --line-strong:   #9a92ad;
+  --arrow-grey:    #46404f;
+  --arrow-selected:#9c7f2c;
+  --given-ink:     #f3f1f8;
+  --entry-ink:     #7fb0ff;
+
+  --cell-selected: rgba(168, 132, 32, .68);
+  --cell-peer:     rgba(104, 96, 128, .38);
+  --cell-same:     rgba(54, 108, 178, .52);
+  --cell-target:   rgba(158, 62, 130, .5);
+  --selection-ring:rgba(226, 186, 74, .9);
+  --error:         #ff7089;
+  --error-soft:    #58202c;
+  --error-blend:   screen;
+
+  /* Pastel swatches would blow out on a dark grid and make digits
+     unreadable, so they paint as tints instead. */
+  --color-opacity: .42;
+
+  --shadow:        0 2px 6px rgba(0, 0, 0, .40), 0 8px 28px rgba(0, 0, 0, .32);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Theme changes animate so the switch does not feel like a page reload. */
+body, .board-wrap, .stats-bar, .dlg, .icon-btn, .pill-btn,
+.mode-btn, .action-btn, .rules-box, .field select {
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+
+kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: .85em;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* ============================ APP SHELL ============================ */
+
+.app {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(340px, 420px);
+  gap: clamp(16px, 3vw, 40px);
+  align-items: start;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(12px, 2.5vw, 32px);
+}
+
+.board-pane { min-width: 0; }
+
+/*
+ * On desktop the app fills the viewport exactly: the board scales to the
+ * available height and the control panel scrolls internally if a short screen
+ * cannot show all of it. Below the breakpoint the page scrolls normally.
+ */
+@media (min-width: 981px) {
+  .app { height: 100dvh; }
+  .board-pane {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .control-pane {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+  }
+}
+
+/* ============================ THE GRID ============================ */
+
+.board-wrap {
+  position: relative;
+  width: 100%;
+  max-width: min(82vh, 700px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  background: var(--paper);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  touch-action: none;          /* let drag-select work on touch devices */
+  user-select: none;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+}
+
+/* Grid lines are an overlay so every cell stays exactly the same size. */
+.grid-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.gl-thin  { stroke: var(--line); }
+.gl-thick { stroke: var(--line-strong); }
+
+.cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+/* --- cell layers, explicitly stacked ---
+   0 user colours · 1 state highlights · 2 arrow · 3 digits and marks.
+   Without this the colour layer would paint over the selection highlight,
+   because a real child always beats the ::before that draws the state. */
+
+.cell-colors {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+.cell-colors.has-color { opacity: var(--color-opacity); }
+
+/* The show/hide toggle. Colours stay in the save file, they just stop
+   painting - specificity beats .has-color without needing !important. */
+.grid.colors-hidden .cell-colors.has-color { opacity: 0; }
+
+.cell-arrow {
+  position: absolute;
+  inset: 12%;
+  z-index: 2;
+  width: 76%;
+  height: 76%;
+  fill: var(--arrow-grey);
+  pointer-events: none;
+  transition: fill .12s ease;
+}
+
+.cell-value {
+  position: relative;
+  z-index: 3;
+  font-size: clamp(20px, 5.2vmin, 46px);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--entry-ink);
+  pointer-events: none;
+}
+.cell.is-given .cell-value {
+  color: var(--given-ink);
+  font-weight: 700;
+}
+
+.cell-center {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6%;
+  font-size: clamp(8px, 2vmin, 17px);
+  font-weight: 600;
+  letter-spacing: -.02em;
+  color: var(--entry-ink);
+  line-height: 1;
+  pointer-events: none;
+  word-break: break-all;
+  text-align: center;
+}
+/* Squeeze the type as the mark count grows so it never overflows. */
+.cell-center[data-count="6"] { font-size: clamp(7px, 1.7vmin, 14px); }
+.cell-center[data-count="7"],
+.cell-center[data-count="8"],
+.cell-center[data-count="9"] { font-size: clamp(6px, 1.45vmin, 12px); }
+
+.cell-corner {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 4%;
+  font-size: clamp(7px, 1.75vmin, 15px);
+  font-weight: 600;
+  color: var(--entry-ink);
+  line-height: 1;
+  pointer-events: none;
+}
+/* Eight slots hugging the border, leaving the middle free for centre marks. */
+.cell-corner span:nth-child(1) { grid-area: 1 / 1; justify-self: start;  align-self: start; }
+.cell-corner span:nth-child(2) { grid-area: 1 / 2; justify-self: center; align-self: start; }
+.cell-corner span:nth-child(3) { grid-area: 1 / 3; justify-self: end;    align-self: start; }
+.cell-corner span:nth-child(4) { grid-area: 2 / 1; justify-self: start;  align-self: center; }
+.cell-corner span:nth-child(5) { grid-area: 2 / 3; justify-self: end;    align-self: center; }
+.cell-corner span:nth-child(6) { grid-area: 3 / 1; justify-self: start;  align-self: end; }
+.cell-corner span:nth-child(7) { grid-area: 3 / 2; justify-self: center; align-self: end; }
+.cell-corner span:nth-child(8) { grid-area: 3 / 3; justify-self: end;    align-self: end; }
+
+/* --- cell states (order matters: later rules win) --- */
+
+.cell.is-peer::before,
+.cell.is-same-digit::before,
+.cell.is-arrow-target::before,
+.cell.is-selected::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.cell.is-peer::before        { background: var(--cell-peer); }
+.cell.is-same-digit::before  { background: var(--cell-same); }
+.cell.is-arrow-target::before{ background: var(--cell-target); }
+/* The ring keeps the selection unmistakable even on a strongly coloured cell,
+   where a translucent fill alone would not read. */
+.cell.is-selected::before {
+  background: var(--cell-selected);
+  box-shadow: inset 0 0 0 3px var(--selection-ring);
+}
+
+.cell.is-selected .cell-arrow { fill: var(--arrow-selected); }
+
+.cell.is-conflict .cell-value,
+.cell.is-wrong .cell-value { color: var(--error); }
+
+.cell.is-wrong::after,
+.cell.is-conflict::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--error-soft);
+  mix-blend-mode: var(--error-blend);
+  pointer-events: none;
+}
+
+.board-hint {
+  margin: 14px auto 0;
+  max-width: min(82vh, 700px);
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* --- busy veil --- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(2px);
+  border-radius: 6px;
+  font-weight: 600;
+  color: var(--control-ink);
+}
+.overlay.show { display: flex; }
+.spinner {
+  width: 38px;
+  height: 38px;
+  border: 4px solid var(--border-soft);
+  border-top-color: var(--purple);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ========================= CONTROL PANEL ========================= */
+
+.control-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* --- banner --- */
+
+.banner {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .18));
+}
+.banner-body {
+  flex: 1;
+  padding: 14px 18px;
+  background: linear-gradient(180deg, var(--maroon) 0%, var(--maroon-dark) 100%);
+  color: #fff;
+  text-align: center;
+  border-radius: 4px;
+}
+.banner h1 {
+  margin: 0;
+  font-size: clamp(19px, 2.3vw, 25px);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: .3px;
+}
+.banner-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-style: italic;
+  opacity: .88;
+}
+.banner-actions {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.banner-user, .banner-leaderboard {
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: rgba(0,0,0,.16);
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.banner-user:hover, .banner-leaderboard:hover { background: rgba(0,0,0,.28); }
+.avatar-dot { color: #ffd166; margin-right: 4px; }
+/* The folded-ribbon ends. */
+.banner-notch {
+  width: 18px;
+  align-self: center;
+  height: 70%;
+  background: var(--maroon-dark);
+}
+.banner-notch-left  { clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%); }
+.banner-notch-right { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 40% 50%); }
+
+/* --- rules --- */
+
+.rules-box {
+  padding: 11px 15px;
+  background: var(--green);
+  border-radius: var(--radius);
+  font-size: 14px;
+  line-height: 1.42;
+  color: var(--green-ink);
+}
+.rules-box p { margin: 0 0 6px; }
+.rules-box p:last-child { margin-bottom: 0; }
+
+/* --- utility bar --- */
+
+.utility-bar {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.icon-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 40px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--control-ink);
+  cursor: pointer;
+  transition: background .12s, transform .08s, opacity .12s;
+}
+.icon-btn svg { grid-area: 1 / 1; width: 21px; height: 21px; fill: currentColor; }
+.icon-btn:hover  { background: var(--hover); }
+.icon-btn:active { transform: translateY(1px); }
+
+/* Paired icons: each button ships both states and CSS picks one. */
+.icon-light, .icon-dark { display: none; }
+:root[data-theme="light"] .icon-dark  { display: block; } /* offer the moon */
+:root[data-theme="dark"]  .icon-light { display: block; } /* offer the sun */
+
+#btn-colors .icon-off { display: none; }
+#btn-colors.is-off .icon-on  { display: none; }
+#btn-colors.is-off .icon-off { display: block; }
+#btn-colors.is-off {
+  color: var(--ink-soft);
+  opacity: .7;
+}
+
+/* --- numpad --- */
+
+.numpad {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: stretch;
+}
+.digits {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.num-btn {
+  /* Height tracks the viewport rather than the button's own width, so the
+     panel stays inside the fold on short screens. */
+  height: clamp(44px, 7.6vh, 78px);
+  border: none;
+  border-radius: 12px;
+  background: var(--purple);
+  color: #fff;
+  font-size: clamp(19px, 2.6vh, 27px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s, transform .06s;
+}
+.num-btn:hover  { background: var(--purple-dark); }
+.num-btn:active { transform: translateY(2px); }
+.num-wide {
+  grid-column: span 3;
+  height: 44px;
+  display: grid;
+  place-items: center;
+}
+.num-wide svg { width: 26px; height: 26px; fill: currentColor; }
+
+/* In colour mode the digit keys become swatches. */
+.num-btn.is-swatch {
+  background: var(--swatch);
+  color: #43405a;
+  border: 2px solid var(--border-soft);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .7);
+}
+.num-btn.is-swatch:hover { filter: brightness(.94); }
+
+.modes {
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 8px;
+}
+.mode-btn {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  width: 82px;
+  padding: 6px 4px;
+  border: 2px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--surface-3);
+  color: var(--control-ink);
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+.mode-btn:hover { background: var(--hover); }
+.mode-btn.is-active {
+  background: var(--surface);
+  border-color: var(--purple);
+  box-shadow: 0 0 0 2px rgba(124, 63, 196, .22);
+}
+.mode-label { font-size: 11px; font-weight: 600; letter-spacing: .2px; }
+
+.mode-glyph {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 22px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+.mode-glyph-normal {
+  border: 2px solid currentColor;
+  border-radius: 5px;
+  font-size: 13px;
+}
+.mode-glyph-corner {
+  position: relative;
+  border: 2px solid currentColor;
+  border-radius: 5px;
+}
+.mode-glyph-corner i {
+  position: absolute;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 700;
+}
+.mode-glyph-corner i:nth-child(1) { top: 1px; left: 2px; }
+.mode-glyph-corner i:nth-child(2) { top: 1px; right: 2px; }
+.mode-glyph-corner i:nth-child(3) { bottom: 1px; left: 2px; }
+.mode-glyph-center {
+  border: 2px solid currentColor;
+  border-radius: 5px;
+  font-size: 9px;
+}
+.mode-glyph-color {
+  border-radius: 5px;
+  background:
+    conic-gradient(#f4978e 0 25%, #ffd166 0 50%, #8ecae6 0 75%, #c8b6e2 0);
+}
+
+/* --- history bar --- */
+
+.history-bar { display: flex; gap: 8px; }
+.pill-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--control-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s;
+}
+.pill-btn svg { width: 17px; height: 17px; fill: currentColor; }
+.pill-btn:hover:not(:disabled) { background: var(--hover); }
+.pill-btn:disabled { opacity: .42; cursor: default; }
+.pill-primary {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+.pill-primary:hover:not(:disabled) { background: var(--purple-dark); }
+.check-counter {
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.16);
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* --- actions --- */
+
+.actions { display: flex; flex-direction: column; gap: 8px; }
+.action-row { display: flex; gap: 8px; align-items: flex-end; }
+
+.field { display: flex; flex-direction: column; gap: 3px; flex: 0 0 132px; }
+.field span { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .5px; }
+.field select {
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.action-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s, transform .06s;
+}
+.action-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.action-btn:active { transform: translateY(1px); }
+.action-primary {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+.action-primary:hover { background: var(--purple-dark); }
+.action-daily {
+  background: var(--maroon);
+  border-color: var(--maroon);
+  color: #fff;
+}
+.action-daily:hover { background: var(--maroon-dark); }
+
+/* --- stats --- */
+
+.stats-bar {
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.timer-block { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.timer {
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  color: var(--ink);
+}
+.timer.is-hidden { visibility: hidden; }
+.mini-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--control-ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mini-btn:hover { background: var(--hover); }
+
+.status-line {
+  margin: 6px 0 10px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--divider);
+}
+.stat { text-align: center; }
+.stat span {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--control-ink);
+}
+.stat label {
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.credit {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* ============================ TOAST ============================ */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translate(-50%, 20px);
+  padding: 11px 20px;
+  border-radius: 10px;
+  background: #2b2634;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .28);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+  z-index: 60;
+}
+:root[data-theme="dark"] .toast { background: #3b3549; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast-good { background: #1f7a4d; }
+.toast-bad  { background: #a81f38; }
+
+/* ============================ DIALOGS ============================ */
+
+.dlg {
+  width: min(94vw, 520px);
+  padding: 24px 26px 20px;
+  border: none;
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .3);
+}
+.dlg::backdrop { background: rgba(12, 10, 16, .58); }
+.dlg h2 { margin: 0 0 12px; font-size: 21px; }
+.dlg h3 { margin: 18px 0 8px; font-size: 15px; }
+.dlg .action-btn { width: 100%; margin-top: 16px; }
+
+.rule-list { margin: 0; padding-left: 20px; line-height: 1.6; font-size: 14.5px; }
+.rule-list li { margin-bottom: 7px; }
+.rule-example {
+  margin: 12px 0 0;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: var(--green);
+  color: var(--green-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--divider);
+  font-size: 14.5px;
+  cursor: pointer;
+}
+.switch input { width: 18px; height: 18px; accent-color: var(--purple); cursor: pointer; }
+
+.stats-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.stats-table th, .stats-table td { padding: 8px 6px; text-align: left; border-bottom: 1px solid var(--divider); }
+.stats-table th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
+.stats-summary { margin: 14px 0 0; font-size: 14px; line-height: 1.7; color: var(--ink-soft); }
+
+/* --- account and leaderboard dialogs --- */
+.dialog-lede { margin: -3px 0 14px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.45; }
+.form-field { display: flex; flex-direction: column; gap: 5px; margin: 10px 0; }
+.form-field span { color: var(--ink-soft); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.form-field input, .friend-add input {
+  height: 42px;
+  width: 100%;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+.form-error { min-height: 18px; margin: 5px 0; color: var(--error); font-size: 12.5px; }
+.auth-actions { display: flex; gap: 8px; }
+.auth-actions .action-btn { margin-top: 0; }
+.action-guest { background: var(--surface-2); }
+.signed-in-line { padding: 14px; border-radius: 10px; background: var(--surface-2); color: var(--ink-soft); }
+.dialog-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.dialog-heading-row h2 { margin-bottom: 4px; }
+.leaderboard-trophy { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--green); color: var(--green-ink); font-size: 22px; }
+.leaderboard-tabs { display: flex; gap: 5px; padding: 4px; margin-bottom: 12px; border-radius: 10px; background: var(--surface-2); }
+.tab-btn { flex: 1; min-height: 34px; border: 0; border-radius: 7px; background: transparent; color: var(--ink-soft); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.tab-btn.is-active { background: var(--surface); color: var(--control-ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.leaderboard-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.leaderboard-table th, .leaderboard-table td { padding: 9px 6px; text-align: left; border-bottom: 1px solid var(--divider); }
+.leaderboard-table th { color: var(--ink-soft); font-size: 10.5px; letter-spacing: .45px; text-transform: uppercase; }
+.leaderboard-table td:nth-child(1), .leaderboard-table td:nth-child(3), .leaderboard-table td:nth-child(4) { font-variant-numeric: tabular-nums; }
+.leaderboard-table tr.is-clean td:first-child { color: var(--green-ink); font-weight: 800; }
+.empty-state { padding: 24px 8px; text-align: center; color: var(--ink-soft); }
+.friend-add { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin-top: 14px; }
+.friend-add .action-btn { flex: 0 0 auto; width: auto; margin-top: 0; }
+.leaderboard-note { margin: 12px 0 0; color: var(--ink-soft); font-size: 11.5px; line-height: 1.45; }
+
+.dlg-victory { text-align: center; }
+.victory-mark {
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--green);
+  color: var(--green-ink);
+  font-size: 32px;
+  font-weight: 700;
+}
+.victory-time {
+  margin: 4px 0;
+  font-size: 42px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--control-ink);
+}
+.victory-meta { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+.victory-actions { display: flex; gap: 10px; margin-top: 18px; }
+.victory-actions .action-btn { margin-top: 0; }
+
+/* ============================ RESPONSIVE ============================ */
+
+@media (max-width: 980px) {
+  .app {
+    grid-template-columns: 1fr;
+    max-width: 640px;
+  }
+  .board-wrap { max-width: min(96vw, 560px); }
+  .board-hint { display: none; }
+  .control-pane { gap: 12px; }
+}
+
+@media (max-width: 460px) {
+  .app { padding: 10px; gap: 12px; }
+  .mode-btn { width: 68px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .action-row { flex-wrap: wrap; }
+  .field { flex-basis: 100%; }
+  .banner-actions { position: static; justify-content: center; padding: 0 0 8px; background: var(--maroon-dark); }
+  .banner { flex-direction: column; }
+  .banner-body { border-radius: 4px 4px 0 0; padding-bottom: 10px; }
+  .banner-notch { display: none; }
+  .banner-user, .banner-leaderboard { font-size: 10.5px; }
+  .history-bar { gap: 6px; }
+  .pill-btn { font-size: 12px; }
+  .check-counter { font-size: 9px; }
+  .friend-add { grid-template-columns: 1fr; }
+}
+
+/* Respect users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}

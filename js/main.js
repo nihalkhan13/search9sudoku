@@ -1,0 +1,359 @@
+/**
+ * main.js
+ * Application entry point: wires the engine, timer, storage, API and UI
+ * together and owns the high-level game flow (new puzzle, daily, restart,
+ * autosave, victory).
+ */
+
+import { GameEngine } from './core/GameEngine.js';
+import { serializePuzzle, deserializePuzzle, DIFFICULTY } from './core/Generator.js';
+import { todaySeed, dailyDifficulty } from './core/rng.js';
+import { storage } from './services/StorageService.js';
+import {
+  fetchDailyPuzzle,
+  fetchPracticePuzzle,
+  buildShareUrl,
+  readPuzzleFromUrl,
+} from './services/ApiService.js';
+import {
+  currentUser,
+  login,
+  register,
+  playAsGuest,
+  logout,
+  submitScore,
+  fetchLeaderboard,
+  addFriend,
+} from './services/CloudService.js';
+import { Timer, formatTime } from './ui/Timer.js';
+import { UIController } from './ui/UIController.js';
+
+const engine = new GameEngine();
+const settings = storage.loadSettings();
+engine.autoCleanMarks = settings.autoCleanMarks;
+
+let ui;
+let currentMode = 'practice'; // 'practice' | 'daily'
+let solvedThisRound = false;
+let checkCount = 0;
+let activeUser = currentUser();
+
+const timer = new Timer(() => ui?._renderControls());
+
+/* ------------------------------------------------------------------ flow */
+
+/** Install a puzzle and reset the session around it. */
+function startPuzzle(puzzle, { mode = 'practice', savedState = null, elapsedMs = 0, savedChecks = 0 } = {}) {
+  currentMode = mode;
+  solvedThisRound = false;
+  checkCount = Number(savedChecks) || 0;
+
+  engine.loadPuzzle(puzzle, savedState);
+  ui.selection.clear();
+  ui.showErrors = false;
+
+  timer.reset(elapsedMs);
+  timer.pause();
+
+  updateHeader();
+  ui.renderStats(storage.loadStats());
+  ui.renderUser(activeUser);
+  ui.render();
+  saveProgress();
+}
+
+function updateHeader() {
+  const p = engine.puzzle;
+  const title = document.getElementById('puzzle-title');
+  const sub = document.getElementById('puzzle-subtitle');
+  const label = DIFFICULTY[p.difficulty]?.label ?? 'Custom';
+
+  if (currentMode === 'daily') {
+    title.textContent = 'Daily Puzzle';
+    sub.textContent = `${p.dateSeed ?? todaySeed()} · ${label}`;
+  } else {
+    title.textContent = 'Search Nine Sudoku';
+    sub.textContent = `${label} · ${p.stats?.arrowCount ?? 0} arrows · ${p.stats?.givenCount ?? 0} givens`;
+  }
+}
+
+/**
+ * Generation is synchronous and takes ~25ms, but we still yield a frame so
+ * the "Generating..." veil actually paints before the main thread blocks.
+ *
+ * requestAnimationFrame is raced against a timer on purpose: a hidden or
+ * backgrounded tab never fires rAF, and without the fallback the veil would
+ * stay up forever if the player switched away mid-generation.
+ */
+function yieldToPaint() {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(fallback);
+      resolve();
+    };
+    const fallback = setTimeout(finish, 250);
+    requestAnimationFrame(() => setTimeout(finish, 0));
+  });
+}
+
+async function withBusy(text, fn) {
+  ui.setBusy(true, text);
+  try {
+    await yieldToPaint();
+    return await fn();
+  } finally {
+    ui.setBusy(false);
+  }
+}
+
+async function newPuzzle(difficulty = 'medium') {
+  const puzzle = await withBusy('Generating puzzle...', () => fetchPracticePuzzle(difficulty));
+  startPuzzle(puzzle, { mode: 'practice' });
+  ui.flash(`New ${DIFFICULTY[difficulty]?.label ?? ''} puzzle`, 'good');
+}
+
+async function dailyPuzzle() {
+  const seed = todaySeed();
+  const difficulty = dailyDifficulty(seed);
+  const puzzle = await withBusy("Loading today's puzzle...", () => fetchDailyPuzzle(seed, difficulty));
+  startPuzzle(puzzle, { mode: 'daily' });
+
+  const done = storage.getDailyRecord(seed);
+  if (done) ui.flash(`Already solved today in ${formatTime(done.elapsedMs)}`, 'good');
+  else ui.flash(`Daily puzzle for ${seed} · ${DIFFICULTY[difficulty].label}`, 'neutral');
+}
+
+function restart() {
+  engine.resetBoard();
+  checkCount = 0;
+  timer.reset(0);
+  timer.pause();
+  ui.selection.clear();
+  ui.showErrors = false;
+  ui.render();
+  ui.flash('Board cleared', 'neutral');
+}
+
+/* -------------------------------------------------------------- autosave */
+
+let saveTimer = null;
+function saveProgress() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    if (!engine.puzzle) return;
+    storage.saveCurrentGame({
+      puzzle: serializePuzzle(engine.puzzle),
+      state: engine.serializeState(),
+      elapsedMs: timer.elapsedMs,
+      mode: currentMode,
+      dateSeed: engine.puzzle.dateSeed ?? null,
+      checkCount,
+    });
+  }, 400);
+}
+
+/* --------------------------------------------------------------- victory */
+
+function onSolved() {
+  if (solvedThisRound) return;
+  if (!engine.isComplete()) return;
+  solvedThisRound = true;
+
+  timer.pause();
+  const elapsed = timer.elapsedMs;
+  const difficulty = engine.puzzle.difficulty;
+  const isDaily = currentMode === 'daily';
+  const seed = engine.puzzle.dateSeed ?? todaySeed();
+
+  const { stats, isNewBest } = storage.recordSolve(difficulty, elapsed, isDaily, seed, checkCount);
+  if (isDaily) storage.markDailyComplete(seed, elapsed);
+  storage.clearCurrentGame();
+  ui.renderStats(stats);
+
+  // Fire-and-forget; no-ops until a backend is configured in ApiService.
+  const score = {
+    puzzleId: engine.puzzle.id,
+    timeMs: elapsed,
+    checkCount,
+    difficulty,
+    dateSeed: engine.puzzle.dateSeed ?? null,
+    isDaily,
+    grid: engine.values,
+  };
+  storage.saveLocalScore({ ...score, userId: activeUser?.id ?? 'local-guest', username: activeUser?.username ?? 'Guest' });
+  submitScore(score).catch(() => {});
+
+  document.getElementById('victory-time').textContent = formatTime(elapsed);
+  document.getElementById('victory-difficulty').textContent =
+    DIFFICULTY[difficulty]?.label ?? 'Custom';
+  document.getElementById('victory-best').textContent = isNewBest
+    ? 'New personal best!'
+    : `Best: ${stats.best[difficulty] != null ? formatTime(stats.best[difficulty]) : '--:--'}`;
+  document.getElementById('dialog-victory').showModal();
+}
+
+/** Called after every move: autosave, and auto-detect a finished grid. */
+function onMove() {
+  saveProgress();
+  if (engine.remainingCells() === 0 && engine.isComplete()) onSolved();
+}
+
+function onCheck() {
+  checkCount += 1;
+  saveProgress();
+  ui.render();
+}
+
+async function authLogin(username, password) {
+  const user = await login(username, password);
+  if (!user) throw new Error('Username or password not recognised');
+  activeUser = user;
+  ui.renderUser(activeUser);
+  ui.flash(`Welcome back, ${user.username}`, 'good');
+}
+
+async function authRegister(username, password) {
+  const user = await register(username, password);
+  if (!user) throw new Error('Choose a new username and a password of 6+ characters');
+  activeUser = user;
+  ui.renderUser(activeUser);
+  ui.flash(`Account created for ${user.username}`, 'good');
+}
+
+async function authGuest() {
+  activeUser = await playAsGuest();
+  ui.renderUser(activeUser);
+  ui.flash('Playing as Guest · scores stay on this device', 'neutral');
+}
+
+async function authLogout() {
+  await logout();
+  activeUser = null;
+  ui.renderUser(null);
+  ui.flash('Signed out', 'neutral');
+}
+
+async function openLeaderboard(scope = 'global') {
+  const result = await fetchLeaderboard({
+    puzzleId: engine.puzzle?.id,
+    scope,
+    limit: 50,
+  });
+  ui.renderLeaderboard(result?.entries ?? [], scope, Boolean(result?.offline));
+}
+
+async function addFriendByUsername(username) {
+  const result = await addFriend(username);
+  const status = document.getElementById('friend-status');
+  if (result?.friend) {
+    if (status) status.textContent = `${result.friend.username} added to your friends.`;
+    ui.actions.openLeaderboard?.('friends');
+  } else if (status) {
+    status.textContent = 'That player could not be found yet.';
+  }
+}
+
+/* ------------------------------------------------------------------ boot */
+
+function share() {
+  const url = buildShareUrl(engine.puzzle);
+  navigator.clipboard?.writeText(url).then(
+    () => ui.flash('Puzzle link copied to clipboard', 'good'),
+    () => ui.flash('Could not copy - check the address bar', 'bad')
+  );
+  window.history.replaceState(null, '', url);
+}
+
+function openStats() {
+  const stats = storage.loadStats();
+  const body = document.getElementById('stats-body');
+  const rows = Object.entries(DIFFICULTY).map(([key, cfg]) => {
+    const best = stats.best[key] != null ? formatTime(stats.best[key]) : '--:--';
+    return `<tr><td>${cfg.label}</td><td>${stats.solved[key] ?? 0}</td><td>${best}</td></tr>`;
+  });
+  body.innerHTML = `
+    <table class="stats-table">
+      <thead><tr><th>Difficulty</th><th>Solved</th><th>Best</th></tr></thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>
+    <p class="stats-summary">
+      Total solved: <strong>${stats.totalSolved}</strong><br>
+      Checks used: <strong>${stats.totalChecks ?? 0}</strong><br>
+      Daily streak: <strong>${stats.streak.current}</strong> (best ${stats.streak.best})<br>
+      Time played: <strong>${formatTime(stats.totalMs)}</strong>
+    </p>`;
+  document.getElementById('dialog-stats').showModal();
+}
+
+async function boot() {
+  ui = new UIController(engine, {
+    timer,
+    storage,
+    settings,
+    actions: {
+      newPuzzle, dailyPuzzle, restart, share, openStats, onMove, onSolved, onCheck,
+      authLogin, authRegister, authGuest, authLogout, openLeaderboard,
+      addFriend: addFriendByUsername,
+      getCheckCount: () => checkCount,
+    },
+  });
+
+  document.getElementById('btn-victory-new').addEventListener('click', () => {
+    document.getElementById('dialog-victory').close();
+    newPuzzle(document.getElementById('difficulty-select').value);
+  });
+
+  // Priority: a puzzle in the URL, then a saved game, then a fresh one.
+  const fromUrl = readPuzzleFromUrl();
+  if (fromUrl) {
+    startPuzzle(fromUrl, { mode: 'practice' });
+    ui.flash('Loaded puzzle from link', 'good');
+    return;
+  }
+
+  const saved = storage.loadCurrentGame();
+  if (saved?.puzzle) {
+    try {
+      const puzzle = deserializePuzzle(saved.puzzle);
+      if (saved.dateSeed) {
+        puzzle.dateSeed = saved.dateSeed;
+        puzzle.isDaily = true;
+      }
+      startPuzzle(puzzle, {
+        mode: saved.mode ?? 'practice',
+        savedState: saved.state,
+        elapsedMs: saved.elapsedMs ?? 0,
+        savedChecks: saved.checkCount ?? 0,
+      });
+      ui.flash('Resumed your saved game', 'neutral');
+      return;
+    } catch (err) {
+      console.warn('[main] could not restore saved game:', err.message);
+      storage.clearCurrentGame();
+    }
+  }
+
+  await newPuzzle('easy');
+}
+
+// Keep the clock honest when the tab is hidden, and never lose progress.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) saveProgress();
+});
+window.addEventListener('beforeunload', () => {
+  clearTimeout(saveTimer);
+  if (!engine.puzzle || solvedThisRound) return;
+  storage.saveCurrentGame({
+    puzzle: serializePuzzle(engine.puzzle),
+    state: engine.serializeState(),
+    elapsedMs: timer.elapsedMs,
+    mode: currentMode,
+    dateSeed: engine.puzzle.dateSeed ?? null,
+    checkCount,
+  });
+});
+
+boot();

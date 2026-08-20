@@ -1,0 +1,12 @@
+{
+  "name": "search-nine-sudoku",
+  "version": "1.0.0",
+  "description": "Search Nine Sudoku - an interactive variant Sudoku player and generator",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node scripts/selftest.js"
+  },
+  "author": "",
+  "license": "MIT"
+}

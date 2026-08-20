@@ -1,0 +1,78 @@
+/**
+ * rng.js
+ * Small deterministic PRNG so a given seed string always produces the same
+ * puzzle. Used by the Daily Puzzle mode (seed = "YYYY-MM-DD") and by any
+ * reproducible practice puzzle (seed = puzzle id).
+ */
+
+/** xmur3 string hash -> 32-bit seed generator. */
+function xmur3(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return function () {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return h >>> 0;
+  };
+}
+
+/** mulberry32 - fast, good-enough 32-bit PRNG. */
+function mulberry32(a) {
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Create a seeded random source.
+ * @param {string|number} seed - any string; omit for a random (non-reproducible) source.
+ */
+export function createRng(seed = String(Math.random())) {
+  const next = mulberry32(xmur3(String(seed))());
+  return {
+    seed: String(seed),
+    /** float in [0, 1) */
+    next,
+    /** integer in [0, n) */
+    int: (n) => Math.floor(next() * n),
+    /** random element of an array */
+    pick: (arr) => arr[Math.floor(next() * arr.length)],
+    /** in-place Fisher-Yates shuffle; returns the same array */
+    shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(next() * (i + 1));
+        const tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+      }
+      return arr;
+    },
+  };
+}
+
+/** Today's local date as YYYY-MM-DD - the canonical Daily Puzzle seed. */
+export function todaySeed(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Rotate the daily challenge through Easy -> Medium -> Hard.
+ * The date is converted to a UTC-safe day number so every player sees the
+ * same difficulty even when they are in different time zones.
+ */
+export function dailyDifficulty(dateSeed = todaySeed()) {
+  const [y, m, d] = String(dateSeed).split('-').map(Number);
+  const day = Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+  return ['easy', 'medium', 'hard'][((day % 3) + 3) % 3];
+}

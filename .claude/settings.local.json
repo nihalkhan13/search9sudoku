@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/selftest.js)",
+      "Bash(node -e ' *)",
+      "Bash(mkdir -p \"/Users/nihalkhan/Documents/Claude/Search 9 Sudoku/.claude\")"
+    ]
+  }
+}

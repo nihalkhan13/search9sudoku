@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="Search Nine Sudoku - a variant Sudoku where arrows point to the 9 in their row or column.">
+<meta name="theme-color" content="#7b1240">
+<meta name="color-scheme" content="light dark">
+<title>Search Nine Sudoku</title>
+<script>
+/* Resolve the theme before the stylesheet paints, otherwise a dark-mode user
+   sees a white flash on every load. Kept inline and tiny on purpose. */
+(function () {
+  var theme = 'light';
+  try {
+    var saved = JSON.parse(localStorage.getItem('search9:settings') || '{}');
+    if (saved.darkMode === true) theme = 'dark';
+    else if (saved.darkMode === false) theme = 'light';
+    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark';
+  } catch (e) { /* storage blocked - fall back to light */ }
+  document.documentElement.dataset.theme = theme;
+})();
+</script>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>9️⃣</text></svg>">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== LEFT: THE GRID ==================== -->
+  <main class="board-pane">
+    <div class="board-wrap" id="board-wrap">
+      <div class="grid" id="grid" role="grid" aria-label="Search Nine Sudoku grid"></div>
+      <svg class="grid-lines" id="grid-lines" aria-hidden="true" preserveAspectRatio="none"></svg>
+      <div class="overlay" id="overlay">
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="overlay-text">Generating puzzle...</p>
+      </div>
+    </div>
+    <p class="board-hint">
+      Click or drag to select · <kbd>1</kbd>–<kbd>9</kbd> to enter ·
+      <kbd>Shift</kbd>+digit for corner marks · <kbd>Ctrl</kbd>+digit for centre marks
+    </p>
+  </main>
+
+  <!-- ==================== RIGHT: CONTROLS ==================== -->
+  <aside class="control-pane">
+
+    <!-- Title banner -->
+    <div class="banner">
+      <div class="banner-notch banner-notch-left" aria-hidden="true"></div>
+      <div class="banner-body">
+        <h1 id="puzzle-title">Search Nine Sudoku</h1>
+        <p class="banner-sub" id="puzzle-subtitle">Loading…</p>
+      </div>
+      <div class="banner-actions">
+        <button class="banner-user" id="btn-user" type="button" aria-label="Account">
+          <span class="avatar-dot">●</span><span id="user-badge">Sign in</span>
+        </button>
+        <button class="banner-leaderboard" id="btn-leaderboard" type="button">Leaderboard</button>
+      </div>
+      <div class="banner-notch banner-notch-right" aria-hidden="true"></div>
+    </div>
+
+    <!-- Rules -->
+    <div class="rules-box" id="rules-text">
+      <p><strong>Normal Sudoku rules apply.</strong></p>
+      <p>
+        Each arrow points to the digit <strong>9</strong> in its row or column.
+        The digit in the arrow's cell is the distance from that cell to the 9.
+      </p>
+    </div>
+
+    <!-- Utility bar -->
+    <div class="utility-bar">
+      <button class="icon-btn" id="btn-settings" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 1 15.5 12 3.5 3.5 0 0 1 12 15.5m7.43-2.53a7.6 7.6 0 0 0 0-1.94l2.03-1.58a.5.5 0 0 0 .12-.62l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.68-.97l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54a7.3 7.3 0 0 0-1.68.97l-2.39-.96a.5.5 0 0 0-.6.22L2.42 8.83a.5.5 0 0 0 .12.62l2.03 1.58a7.6 7.6 0 0 0 0 1.94l-2.03 1.58a.5.5 0 0 0-.12.62l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96a7.3 7.3 0 0 0 1.68.97l.36 2.54a.5.5 0 0 0 .5.42h3.84a.5.5 0 0 0 .5-.42l.36-2.54a7.3 7.3 0 0 0 1.68-.97l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.62Z"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-theme" title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+        <svg class="icon-light" viewBox="0 0 24 24"><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12m8-6 3-3-3-3V1.5h-4L13 0l-3 1.5H6v4L3 9l3 3-3 3v4h4l3 3 3-1.5h4v-4l3-3Z" transform="scale(.86) translate(2 2)"/><circle cx="12" cy="12" r="4.2"/></svg>
+        <svg class="icon-dark" viewBox="0 0 24 24"><path d="M12.3 2a9 9 0 0 0 9.4 13.6A9.5 9.5 0 1 1 12.3 2Z"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-colors" title="Show or hide cell colours" aria-label="Show or hide cell colours" aria-pressed="true">
+        <svg class="icon-on" viewBox="0 0 24 24"><path d="M12 4.5c-5 0-9.3 3.1-11 7.5 1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5m0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10m0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+        <svg class="icon-off" viewBox="0 0 24 24"><path d="M11.8 9.02 15 12.2v-.2a3 3 0 0 0-3.2-3m-4.3.83L9.06 11.4a3 3 0 0 0 3.55 3.55l1.55 1.55a5 5 0 0 1-7.16-6.65M2 4.27l2.28 2.28.46.46A11.8 11.8 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.43.42L19.73 22 21 20.73 3.27 3M12 6.5a5 5 0 0 1 5 5c0 .64-.13 1.26-.36 1.82l2.93 2.93c1.5-1.25 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-4 .7l2.17 2.15c.56-.22 1.17-.35 1.83-.35Z"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-fullscreen" title="Fullscreen" aria-label="Toggle fullscreen">
+        <svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4m11-5h5v5h-2V6h-3V4M6 15v3h3v2H4v-5h2m12 0h2v5h-5v-2h3v-3Z"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-stats" title="Statistics" aria-label="Statistics">
+        <svg viewBox="0 0 24 24"><path d="M4 20V10h3v10H4m6.5 0V4h3v16h-3M17 20v-7h3v7h-3Z"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-rules" title="How to play" aria-label="How to play">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m1 17h-2v-2h2v2m2.07-7.75-.9.92A3.4 3.4 0 0 0 13 15h-2v-.5a4 4 0 0 1 1.17-2.83l1.24-1.26A2 2 0 0 0 14 9a2 2 0 0 0-4 0H8a4 4 0 0 1 8 0 3.2 3.2 0 0 1-.93 2.25Z"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-share" title="Copy share link" aria-label="Copy share link">
+        <svg viewBox="0 0 24 24"><path d="M18 16.08a2.9 2.9 0 0 0-1.96.77L8.91 12.7a3.3 3.3 0 0 0 0-1.4l7.05-4.11A3 3 0 1 0 15 5a3 3 0 0 0 .06.55L8.04 9.68a3 3 0 1 0 0 4.64l7.09 4.13a2.8 2.8 0 0 0-.08.63A2.92 2.92 0 1 0 18 16.08Z"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-restart" title="Clear the board" aria-label="Clear the board">
+        <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8Z"/></svg>
+      </button>
+    </div>
+
+    <!-- Numpad -->
+    <div class="numpad">
+      <div class="digits">
+        <button class="num-btn" data-digit="1">1</button>
+        <button class="num-btn" data-digit="2">2</button>
+        <button class="num-btn" data-digit="3">3</button>
+        <button class="num-btn" data-digit="4">4</button>
+        <button class="num-btn" data-digit="5">5</button>
+        <button class="num-btn" data-digit="6">6</button>
+        <button class="num-btn" data-digit="7">7</button>
+        <button class="num-btn" data-digit="8">8</button>
+        <button class="num-btn" data-digit="9">9</button>
+        <button class="num-btn num-wide" id="btn-delete" title="Delete (Backspace)">
+          <svg viewBox="0 0 24 24"><path d="M20 5H9l-5 7 5 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2m-1.5 10.09-1.41 1.41L14 13.41 11.91 15.5 10.5 14.09 12.59 12 10.5 9.91l1.41-1.41L14 10.59l2.09-2.09 1.41 1.41L15.41 12Z"/></svg>
+        </button>
+      </div>
+
+      <div class="modes">
+        <button class="mode-btn is-active" data-mode="normal" title="Normal entry (Z)">
+          <span class="mode-glyph mode-glyph-normal">9</span>
+          <span class="mode-label">Normal</span>
+        </button>
+        <button class="mode-btn" data-mode="corner" title="Corner marks (X or Shift+digit)">
+          <span class="mode-glyph mode-glyph-corner"><i>1</i><i>2</i><i>3</i></span>
+          <span class="mode-label">Corner</span>
+        </button>
+        <button class="mode-btn" data-mode="center" title="Centre marks (C or Ctrl+digit)">
+          <span class="mode-glyph mode-glyph-center">12</span>
+          <span class="mode-label">Centre</span>
+        </button>
+        <button class="mode-btn" data-mode="color" title="Colour highlight (V)">
+          <span class="mode-glyph mode-glyph-color" aria-hidden="true"></span>
+          <span class="mode-label">Colour</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- History + check -->
+    <div class="history-bar">
+      <button class="pill-btn" id="btn-undo" title="Undo (Ctrl+Z)">
+        <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62A8 8 0 0 1 20 16l2.4-.8A10 10 0 0 0 12.5 8Z"/></svg>
+        Undo
+      </button>
+      <button class="pill-btn" id="btn-redo" title="Redo (Ctrl+Shift+Z)">
+        <svg viewBox="0 0 24 24"><path d="M18.4 10.6A9.95 9.95 0 0 0 11.5 8a10 10 0 0 0-9.9 7.2L4 16a8 8 0 0 1 12.62-3.62L13 16h9V7Z"/></svg>
+        Redo
+      </button>
+      <button class="pill-btn pill-primary" id="btn-check" title="Check the current grid">
+        <svg viewBox="0 0 24 24"><path d="M9 20.42 2.79 14.2l2.83-2.83L9 14.75l9.88-9.88 2.83 2.83Z"/></svg>
+        Check
+        <span class="check-counter" id="round-checks">0 checks</span>
+      </button>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <div class="action-row">
+        <label class="field">
+          <span>Difficulty</span>
+          <select id="difficulty-select">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+        <button class="action-btn action-primary" id="btn-new">New Puzzle</button>
+      </div>
+      <button class="action-btn action-daily" id="btn-daily">
+        <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m0 16H5V9h14Z"/></svg>
+        Daily Puzzle
+      </button>
+    </div>
+
+    <!-- Timer + stats -->
+    <div class="stats-bar">
+      <div class="timer-block">
+        <span class="timer" id="timer-display">00:00</span>
+        <button class="mini-btn" id="btn-timer-toggle">Play</button>
+      </div>
+      <p class="status-line" id="status-line">&nbsp;</p>
+      <div class="stat-grid">
+        <div class="stat"><span id="stat-solved">0</span><label>Solved</label></div>
+        <div class="stat"><span id="stat-best">--:--</span><label>Best</label></div>
+        <div class="stat"><span id="stat-streak">0</span><label>Streak</label></div>
+        <div class="stat"><span id="stat-arrows">0</span><label>Arrows</label></div>
+        <div class="stat"><span id="stat-checks">0</span><label>Checks</label></div>
+      </div>
+    </div>
+
+    <p class="credit">
+      Search Nine variant · built as a local-first single-page app
+    </p>
+  </aside>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ==================== DIALOGS ==================== -->
+<dialog id="dialog-rules" class="dlg">
+  <h2>How to play Search Nine</h2>
+  <ol class="rule-list">
+    <li><strong>Normal Sudoku:</strong> fill every row, column and 3×3 box with the digits 1–9, no repeats.</li>
+    <li><strong>Arrows:</strong> a cell with a grey arrow points toward the digit <strong>9</strong> in that row (left/right arrows) or column (up/down arrows).</li>
+    <li><strong>Distance:</strong> the digit you write in an arrow cell is exactly how many cells away that 9 is.</li>
+  </ol>
+  <p class="rule-example">
+    Example: an arrow pointing <strong>right</strong> holding a <strong>3</strong> means the 9
+    of that row sits exactly three cells to its right. An arrow cell can never contain a 9,
+    since the distance would be zero.
+  </p>
+  <h3>Controls</h3>
+  <ul class="rule-list">
+    <li>Click, or click-and-drag, to select cells. <kbd>Shift</kbd> or <kbd>Ctrl</kbd> extends the selection.</li>
+    <li><kbd>1</kbd>–<kbd>9</kbd> enters a digit · <kbd>Shift</kbd>+digit for corner marks · <kbd>Ctrl</kbd>+digit for centre marks.</li>
+    <li><kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> switch entry mode · <kbd>Space</kbd> cycles.</li>
+    <li><kbd>Backspace</kbd> clears · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Esc</kbd> deselects.</li>
+    <li><kbd>H</kbd> hides or shows your cell colours (they are kept, not erased) · <kbd>D</kbd> toggles dark mode.</li>
+  </ul>
+  <button class="action-btn action-primary" data-close-dialog>Got it</button>
+</dialog>
+
+<dialog id="dialog-settings" class="dlg">
+  <h2>Settings</h2>
+  <label class="switch"><input type="checkbox" data-setting="darkMode"><span>Dark mode</span></label>
+  <label class="switch"><input type="checkbox" data-setting="showCellColors"><span>Show cell colours</span></label>
+  <label class="switch"><input type="checkbox" data-setting="highlightSameDigit"><span>Highlight matching digits</span></label>
+  <label class="switch"><input type="checkbox" data-setting="highlightPeers"><span>Highlight row, column and box</span></label>
+  <label class="switch"><input type="checkbox" data-setting="highlightArrowTarget"><span>Highlight where the selected arrow points</span></label>
+  <label class="switch"><input type="checkbox" data-setting="showConflicts"><span>Flag rule violations as I type</span></label>
+  <label class="switch"><input type="checkbox" data-setting="autoCleanMarks"><span>Auto-remove pencil marks when a digit is placed</span></label>
+  <label class="switch"><input type="checkbox" data-setting="showTimer"><span>Show the timer</span></label>
+  <button class="action-btn action-primary" data-close-dialog>Done</button>
+</dialog>
+
+<dialog id="dialog-stats" class="dlg">
+  <h2>Your statistics</h2>
+  <div id="stats-body"></div>
+  <button class="action-btn action-primary" data-close-dialog>Close</button>
+</dialog>
+
+<dialog id="dialog-auth" class="dlg">
+  <h2>Play your way</h2>
+  <p class="dialog-lede">Save your scores to the global leaderboard, or jump in as a guest and keep everything on this device.</p>
+  <div id="auth-login-fields">
+    <label class="form-field"><span>Username</span><input id="auth-username" autocomplete="username" maxlength="24" placeholder="e.g. arrow9"></label>
+    <label class="form-field"><span>Password</span><input id="auth-password" type="password" autocomplete="current-password" minlength="6" placeholder="6+ characters"></label>
+    <p class="form-error" id="auth-error" role="alert"></p>
+    <div class="auth-actions">
+      <button class="action-btn action-primary" id="btn-auth-login" type="button">Log in</button>
+      <button class="action-btn" id="btn-auth-register" type="button">Create account</button>
+    </div>
+    <button class="action-btn action-guest" id="btn-auth-guest" type="button">Continue as guest</button>
+  </div>
+  <div id="auth-signed-in" hidden>
+    <p class="signed-in-line">You are playing as <strong id="auth-user-name"></strong>.</p>
+    <button class="action-btn" id="btn-auth-logout" type="button">Sign out</button>
+  </div>
+  <button class="action-btn" data-close-dialog>Close</button>
+</dialog>
+
+<dialog id="dialog-leaderboard" class="dlg dlg-leaderboard">
+  <div class="dialog-heading-row"><div><h2>Daily leaderboard</h2><p id="leaderboard-meta" class="dialog-lede">Global</p></div><span class="leaderboard-trophy">✦</span></div>
+  <div class="leaderboard-tabs" role="tablist" aria-label="Leaderboard type">
+    <button class="tab-btn is-active" type="button" data-leaderboard-scope="global">Global</button>
+    <button class="tab-btn" type="button" data-leaderboard-scope="local">Local</button>
+    <button class="tab-btn" type="button" data-leaderboard-scope="friends">Friends</button>
+  </div>
+  <div id="leaderboard-body"><p class="empty-state">Loading scores…</p></div>
+  <div class="friend-add">
+    <input id="friend-username" placeholder="Friend's username" maxlength="24">
+    <button class="action-btn" id="btn-add-friend" type="button">Add friend</button>
+  </div>
+  <p id="friend-status" class="form-error" role="status"></p>
+  <p class="leaderboard-note">No-check solves rank ahead of checked solves. If everyone checks, fastest time wins.</p>
+  <button class="action-btn action-primary" data-close-dialog>Done</button>
+</dialog>
+
+<dialog id="dialog-victory" class="dlg dlg-victory">
+  <div class="victory-mark" aria-hidden="true">9</div>
+  <h2>Solved!</h2>
+  <p class="victory-time" id="victory-time">00:00</p>
+  <p class="victory-meta"><span id="victory-difficulty"></span> · <span id="victory-best"></span></p>
+  <div class="victory-actions">
+    <button class="action-btn action-primary" id="btn-victory-new">New Puzzle</button>
+    <button class="action-btn" data-close-dialog>Close</button>
+  </div>
+</dialog>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
