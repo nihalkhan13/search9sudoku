@@ -1,5 +1,7 @@
 import { puzzleCode } from '../js/core/puzzleCode.js';
+import { dailyDifficulty } from '../js/core/rng.js';
 import { db, ready, send, userFromRequest } from './_lib/db.js';
+import { clearStaleDailyScores } from './_lib/dailyReset.js';
 
 function compare(a, b) {
   const az = Number(a.check_count) === 0;
@@ -26,6 +28,11 @@ export default async function handler(req, res) {
   if (mode === 'practice' && !['easy', 'medium', 'hard'].includes(difficulty)) return send(res, 400, { error: 'difficulty required for a practice leaderboard' });
 
   try {
+    const dailySeed = mode === 'daily' && /^daily-\d{4}-\d{2}-\d{2}$/.test(String(puzzleId))
+      ? String(puzzleId).slice('daily-'.length)
+      : null;
+    await clearStaleDailyScores(dailySeed).catch((error) => console.warn('[leaderboard] stale score cleanup skipped:', error.message));
+    const verifiedDailyDifficulty = dailySeed ? dailyDifficulty(dailySeed) : null;
     let rows = await db('scores?select=id,user_id,puzzle_id,puzzle_seed,time_ms,check_count,difficulty,date_seed,created_at&order=created_at.desc&limit=500');
     const allIds = [...new Set(rows.map((row) => row.user_id))];
     const profiles = allIds.length
@@ -52,7 +59,7 @@ export default async function handler(req, res) {
 
     rows = rows.filter((row) => mode === 'practice'
       ? row.date_seed == null && row.difficulty === difficulty
-      : row.puzzle_id === puzzleId).sort(compare).slice(0, limit);
+      : row.puzzle_id === puzzleId && (!verifiedDailyDifficulty || row.difficulty === verifiedDailyDifficulty)).sort(compare).slice(0, limit);
 
     return send(res, 200, {
       entries: rows.map((row, i) => {

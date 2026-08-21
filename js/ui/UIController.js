@@ -335,7 +335,7 @@ export class UIController {
     on('btn-user', () => this.openDialog('dialog-auth'));
     on('btn-leaderboard', () => {
       this.openDialog('dialog-leaderboard');
-      this.actions.openLeaderboard?.('global');
+      this.actions.openLeaderboard?.('daily');
     });
 
     on('btn-auth-login', () => this._submitAuth('login'));

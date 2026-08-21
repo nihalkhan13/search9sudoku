@@ -19,7 +19,14 @@ const KEYS = {
   SESSION: `${PREFIX}session`,
   LOCAL_SCORES: `${PREFIX}local-scores`,
   FRIENDS: `${PREFIX}friends`,
+  DAILY_OPENS: `${PREFIX}daily-opens`,
+  DAILY_RESET: `${PREFIX}daily-reset`,
 };
+
+// The new Medium puzzle replaces today's earlier daily, so old local state
+// must not make the user appear already finished after the reset.
+const DAILY_RESET_VERSION = '2026-08-20-medium-v1';
+const DAILY_RESET_SEED = '2026-08-20';
 
 export const DEFAULT_SETTINGS = Object.freeze({
   highlightSameDigit: true,
@@ -54,7 +61,29 @@ export class StorageService {
     this.ok = typeof window !== 'undefined' && available();
     if (!this.ok) {
       console.warn('[StorageService] localStorage unavailable - progress will not persist.');
+    } else {
+      this._applyDailyReset();
     }
+  }
+
+  _applyDailyReset() {
+    if (this._read(KEYS.DAILY_RESET, null) === DAILY_RESET_VERSION) return;
+
+    const daily = this._read(KEYS.DAILY, {});
+    delete daily[DAILY_RESET_SEED];
+    this._write(KEYS.DAILY, daily);
+
+    const opens = this._read(KEYS.DAILY_OPENS, {});
+    delete opens[DAILY_RESET_SEED];
+    this._write(KEYS.DAILY_OPENS, opens);
+
+    const scores = this._read(KEYS.LOCAL_SCORES, []);
+    this._write(KEYS.LOCAL_SCORES, scores.filter((score) => score.dateSeed !== DAILY_RESET_SEED));
+
+    const current = this._read(KEYS.CURRENT, null);
+    if (current?.dateSeed === DAILY_RESET_SEED && current.mode === 'daily') this.clearCurrentGame();
+
+    this._write(KEYS.DAILY_RESET, DAILY_RESET_VERSION);
   }
 
   _read(key, fallback = null) {
@@ -200,6 +229,18 @@ export class StorageService {
 
   getDailyRecord(dateSeed) {
     return this._read(KEYS.DAILY, {})[dateSeed] ?? null;
+  }
+
+  hasOpenedDaily(dateSeed) {
+    return Boolean(this._read(KEYS.DAILY_OPENS, {})[dateSeed]);
+  }
+
+  markDailyOpened(dateSeed) {
+    const opens = this._read(KEYS.DAILY_OPENS, {});
+    opens[dateSeed] = Date.now();
+    const keys = Object.keys(opens).sort();
+    while (keys.length > 400) delete opens[keys.shift()];
+    return this._write(KEYS.DAILY_OPENS, opens);
   }
 
   /* --------------------------------------------------------- local account */

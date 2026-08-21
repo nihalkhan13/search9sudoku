@@ -40,7 +40,7 @@ let currentMode = 'practice'; // 'practice' | 'daily'
 let solvedThisRound = false;
 let checkCount = 0;
 let activeUser = currentUser();
-let leaderboardScope = 'global';
+let leaderboardScope = 'daily';
 
 const timer = new Timer(() => ui?._renderControls());
 let dailyLoading = false;
@@ -138,6 +138,7 @@ async function dailyPuzzle() {
     const difficulty = dailyDifficulty(seed);
     const puzzle = await withBusy("Loading today's puzzle...", () => fetchDailyPuzzle(seed, difficulty));
     startPuzzle(puzzle, { mode: 'daily' });
+    storage.markDailyOpened(seed);
 
     const done = storage.getDailyRecord(seed);
     const resetLabel = activeUser?.country === 'US' && activeUser?.state ? `${activeUser.state} midnight` : 'your local midnight';
@@ -410,7 +411,8 @@ async function boot() {
     newPuzzle(document.getElementById('difficulty-select').value);
   });
 
-  // Priority: a puzzle in the URL, then a saved game, then a fresh one.
+  // Priority: a puzzle in the URL, then today's first-open Daily Puzzle, then
+  // a saved game, then a fresh practice puzzle.
   const fromUrl = readPuzzleFromUrl();
   if (fromUrl) {
     startPuzzle(fromUrl, { mode: 'practice' });
@@ -419,6 +421,16 @@ async function boot() {
   }
 
   const saved = storage.loadCurrentGame();
+  const today = currentDailySeed();
+  if (!storage.hasOpenedDaily(today)) {
+    try {
+      await dailyPuzzle();
+      return;
+    } catch (err) {
+      console.warn('[main] could not open today\'s Daily Puzzle:', err.message);
+    }
+  }
+
   if (saved?.puzzle) {
     try {
       const puzzle = deserializePuzzle(saved.puzzle);
