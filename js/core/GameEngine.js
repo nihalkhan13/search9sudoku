@@ -1,7 +1,7 @@
 /**
  * GameEngine.js
  * Owns the board state for one play session: entered digits, pencil marks,
- * cell colours, undo/redo history and rule checking.
+ * cell colors, undo/redo history and rule checking.
  *
  * The engine knows nothing about the DOM. It emits 'change' events and the
  * UIController re-renders in response. That split is what will let the same
@@ -176,7 +176,7 @@ export class GameEngine {
    * @param {string} mode MODE value
    */
   enterDigit(cells, digit, mode = MODE.NORMAL) {
-    // Colour is handled first: unlike digits and pencil marks it applies to
+    // Color is handled first: unlike digits and pencil marks it applies to
     // clue cells too, so it must not go through the editable-only filter.
     // Digit 1 maps to palette index 0, matching the swatch on the button.
     if (mode === MODE.COLOR) return this.applyColor(cells, digit - 1);
@@ -240,8 +240,8 @@ export class GameEngine {
   }
 
   /**
-   * Apply one palette colour to the selection. Colours apply to given cells
-   * too - they are a solver aid, not an answer. A tile has one active colour:
+   * Apply one palette color to the selection. Colors apply to given cells
+   * too - they are a solver aid, not an answer. A tile has one active color:
    * choosing a new swatch replaces the previous one, while choosing the
    * current swatch again clears it.
    */
@@ -251,7 +251,7 @@ export class GameEngine {
     const b = 1 << colorIndex;
     return this._transaction(() => {
       // Keep the interaction predictable for single cells and multi-selects:
-      // clicking the active colour clears it; any other click replaces it.
+      // clicking the active color clears it; any other click replaces it.
       const allOnlyThis = targets.every((i) => this.colors[i] === b);
       for (const i of targets) {
         this.colors[i] = allOnlyThis ? 0 : b;
@@ -260,7 +260,7 @@ export class GameEngine {
   }
 
   /**
-   * Backspace / Delete. In colour mode it wipes colours; otherwise it wipes
+   * Backspace / Delete. In color mode it wipes colors; otherwise it wipes
    * the digit if there is one, else the pencil marks.
    */
   clear(cells, mode = MODE.NORMAL) {

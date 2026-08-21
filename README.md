@@ -64,11 +64,11 @@ right. Two consequences fall out of this and both are used by the solver:
 | Enter a digit | <kbd>1</kbd>–<kbd>9</kbd> (press again to clear) |
 | Corner marks | <kbd>Shift</kbd> + digit, or the Corner mode button |
 | Centre marks | <kbd>Ctrl</kbd> + digit, or the Centre mode button |
-| Colour a cell | Colour mode, then a digit key picks the swatch |
+| Color a cell | Color mode, then a digit key picks the swatch |
 | Switch mode | <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd>, or <kbd>Space</kbd> to cycle |
 | Clear | <kbd>Backspace</kbd> / <kbd>Delete</kbd> |
 | Undo / redo | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> |
-| Show/hide cell colours | <kbd>H</kbd>, or the eye button |
+| Show/hide cell colors | <kbd>H</kbd>, or the eye button |
 | Dark mode | <kbd>D</kbd>, or the moon/sun button |
 | Deselect | <kbd>Esc</kbd> |
 
@@ -89,7 +89,7 @@ js/
     rng.js              seeded PRNG (this is what makes dailies deterministic)
     Solver.js           constraint propagation + backtracking; conflict finder
     Generator.js        solution boards, arrow synthesis, uniqueness-safe carving
-    GameEngine.js       board state, pencil marks, colours, undo/redo
+    GameEngine.js       board state, pencil marks, colors, undo/redo
   services/
     StorageService.js   localStorage: saved game, stats, streaks, settings
     ApiService.js       the backend seam — stubs + the intended HTTP contract
@@ -151,9 +151,9 @@ daily scores, global rankings, and friends leaderboards work across devices.
 
 ---
 
-## Theming and cell colours
+## Theming and cell colors
 
-**Dark mode** is a single CSS override block. Every colour the UI paints comes from a token
+**Dark mode** is a single CSS override block. Every color the UI paints comes from a token
 declared in `:root`, and `:root[data-theme="dark"]` redefines the same names — no
 component-level dark rules exist. `index.html` runs a small inline script that resolves the
 theme *before* the stylesheet paints, so there is no white flash on load.
@@ -162,15 +162,15 @@ The `darkMode` setting is deliberately tri-state: `null` follows the OS (and kee
 it live via `matchMedia`), while `true`/`false` is an explicit choice that sticks even if the
 OS flips later.
 
-**Hiding cell colours** (the eye button / <kbd>H</kbd>) never erases them. The colour layer is
+**Hiding cell colors** (the eye button / <kbd>H</kbd>) never erases them. The color layer is
 always rendered and a single CSS rule stops it painting, so toggling back restores exactly
-what you had — including multi-colour cells. In dark mode the pastel swatches paint at 42%
+what you had — including multi-color cells. In dark mode the pastel swatches paint at 42%
 opacity (`--color-opacity`), because at full strength they would blow out the dark grid and
 make the digits unreadable.
 
-Cell state highlights (selection, peers, matching digits) are translucent so a colour
+Cell state highlights (selection, peers, matching digits) are translucent so a color
 underneath still reads, and the selected cell additionally gets an inset ring so the
-selection stays unmistakable even on a strongly coloured cell.
+selection stays unmistakable even on a strongly colored cell.
 
 ## Notes
 

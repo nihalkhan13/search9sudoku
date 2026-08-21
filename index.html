@@ -41,7 +41,7 @@
     <p class="board-hint" aria-live="polite">
       Click or drag to select · <kbd>1</kbd>–<kbd>9</kbd> to enter ·
       <kbd>Shift</kbd>+digit for corner marks · <kbd>Ctrl</kbd>+digit for centre marks ·
-      <kbd>Q</kbd>–<kbd>O</kbd> for colours
+      <kbd>Q</kbd>–<kbd>O</kbd> to apply colors
     </p>
   </main>
 
@@ -83,7 +83,7 @@
         <svg class="icon-light" viewBox="0 0 24 24"><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12m8-6 3-3-3-3V1.5h-4L13 0l-3 1.5H6v4L3 9l3 3-3 3v4h4l3 3 3-1.5h4v-4l3-3Z" transform="scale(.86) translate(2 2)"/><circle cx="12" cy="12" r="4.2"/></svg>
         <svg class="icon-dark" viewBox="0 0 24 24"><path d="M12.3 2a9 9 0 0 0 9.4 13.6A9.5 9.5 0 1 1 12.3 2Z"/></svg>
       </button>
-      <button class="icon-btn" id="btn-colors" title="Show or hide cell colours" aria-label="Show or hide cell colours" aria-pressed="true">
+      <button class="icon-btn" id="btn-colors" title="Show or hide cell colors" aria-label="Show or hide cell colors" aria-pressed="true">
         <svg class="icon-on" viewBox="0 0 24 24"><path d="M12 4.5c-5 0-9.3 3.1-11 7.5 1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5m0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10m0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
         <svg class="icon-off" viewBox="0 0 24 24"><path d="M11.8 9.02 15 12.2v-.2a3 3 0 0 0-3.2-3m-4.3.83L9.06 11.4a3 3 0 0 0 3.55 3.55l1.55 1.55a5 5 0 0 1-7.16-6.65M2 4.27l2.28 2.28.46.46A11.8 11.8 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.43.42L19.73 22 21 20.73 3.27 3M12 6.5a5 5 0 0 1 5 5c0 .64-.13 1.26-.36 1.82l2.93 2.93c1.5-1.25 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-4 .7l2.17 2.15c.56-.22 1.17-.35 1.83-.35Z"/></svg>
       </button>
@@ -134,9 +134,9 @@
           <span class="mode-glyph mode-glyph-center">12</span>
           <span class="mode-label">Centre</span>
         </button>
-        <button class="mode-btn" type="button" data-mode="color" title="Colour highlight (V, then Q–O)" aria-pressed="false">
+        <button class="mode-btn" type="button" data-mode="color" title="Color highlight (V, then Q–O)" aria-pressed="false">
           <span class="mode-glyph mode-glyph-color" aria-hidden="true"></span>
-          <span class="mode-label">Colour</span>
+          <span class="mode-label">Color</span>
         </button>
       </div>
     </div>
@@ -219,10 +219,10 @@
   <ul class="rule-list">
     <li>Click, or click-and-drag, to select cells. <kbd>Shift</kbd> or <kbd>Ctrl</kbd> extends the selection.</li>
     <li><kbd>1</kbd>–<kbd>9</kbd> enters a digit · <kbd>Shift</kbd>+digit for corner marks · <kbd>Ctrl</kbd>+digit for centre marks.</li>
-    <li>In Colour mode, press <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> <kbd>I</kbd> <kbd>O</kbd> for colours 1–9.</li>
+    <li>Press <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> <kbd>I</kbd> <kbd>O</kbd> to apply colors 1–9 from any mode.</li>
     <li><kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> switch entry mode · <kbd>Space</kbd> cycles.</li>
     <li><kbd>Backspace</kbd> clears · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Esc</kbd> deselects.</li>
-    <li><kbd>H</kbd> hides or shows your cell colours (they are kept, not erased) · <kbd>D</kbd> toggles dark mode.</li>
+    <li><kbd>H</kbd> hides or shows your cell colors (they are kept, not erased) · <kbd>D</kbd> toggles dark mode.</li>
   </ul>
   <button class="action-btn action-primary" data-close-dialog>Got it</button>
 </dialog>
@@ -299,7 +299,7 @@
 <dialog id="dialog-settings" class="dlg">
   <h2>Settings</h2>
   <label class="switch"><input type="checkbox" data-setting="darkMode"><span>Dark mode</span></label>
-  <label class="switch"><input type="checkbox" data-setting="showCellColors"><span>Show cell colours</span></label>
+  <label class="switch"><input type="checkbox" data-setting="showCellColors"><span>Show cell colors</span></label>
   <label class="switch"><input type="checkbox" data-setting="highlightSameDigit"><span>Highlight matching digits</span></label>
   <label class="switch"><input type="checkbox" data-setting="highlightPeers"><span>Highlight row, column and box</span></label>
   <label class="switch"><input type="checkbox" data-setting="highlightArrowTarget"><span>Highlight where the selected arrow points</span></label>

@@ -3,7 +3,7 @@
    Layout: grid on the left, control panel on the right, stacking on mobile.
 
    THEMING
-   Every colour the UI paints comes from a token below. :root holds the light
+   Every color the UI paints comes from a token below. :root holds the light
    values; [data-theme="dark"] overrides the same names, so dark mode needs no
    component-level rules. index.html sets data-theme before first paint.
    ========================================================================== */
@@ -44,7 +44,7 @@
   --entry-ink:     #4557c9;
 
   /* Cell states are translucent on purpose: they paint above the user's own
-     cell colours, so an opaque fill would erase a colour the player chose. */
+     cell colors, so an opaque fill would erase a color the player chose. */
   --cell-selected: rgba(255, 210, 96, .78);
   --cell-peer:     rgba(205, 214, 236, .58);
   --cell-same:     rgba(151, 190, 255, .48);
@@ -54,7 +54,7 @@
   --error-soft:    #ffe0e5;
   --error-blend:   multiply;
 
-  /* how strongly user-applied cell colours paint */
+  /* how strongly user-applied cell colors paint */
   --color-opacity: 1;
 
   --radius:        16px;
@@ -227,8 +227,8 @@ kbd {
 }
 
 /* --- cell layers, explicitly stacked ---
-   0 user colours · 1 state highlights · 2 arrow · 3 digits and marks.
-   Without this the colour layer would paint over the selection highlight,
+   0 user colors · 1 state highlights · 2 arrow · 3 digits and marks.
+   Without this the color layer would paint over the selection highlight,
    because a real child always beats the ::before that draws the state. */
 
 .cell-colors {
@@ -241,7 +241,7 @@ kbd {
 }
 .cell-colors.has-color { opacity: var(--color-opacity); }
 
-/* The show/hide toggle. Colours stay in the save file, they just stop
+/* The show/hide toggle. Colors stay in the save file, they just stop
    painting - specificity beats .has-color without needing !important. */
 .grid.colors-hidden .cell-colors.has-color { opacity: 0; }
 
@@ -332,7 +332,7 @@ kbd {
 .cell.is-peer::before        { background: var(--cell-peer); }
 .cell.is-same-digit::before  { background: var(--cell-same); }
 .cell.is-arrow-target::before{ background: var(--cell-target); }
-/* The ring keeps the selection unmistakable even on a strongly coloured cell,
+/* The ring keeps the selection unmistakable even on a strongly colored cell,
    where a translucent fill alone would not read. */
 .cell.is-selected::before {
   background: var(--cell-selected);
@@ -581,7 +581,7 @@ kbd {
 }
 .num-wide svg { width: 26px; height: 26px; fill: currentColor; }
 
-/* In colour mode the digit keys become swatches. */
+/* In color mode the digit keys become swatches. */
 .num-btn.is-swatch {
   background: var(--swatch);
   color: #43405a;

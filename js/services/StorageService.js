@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   autoCleanMarks: true,
   showTimer: true,
   highlightArrowTarget: true,
-  /** Hides applied cell colours without erasing them. */
+  /** Hides applied cell colors without erasing them. */
   showCellColors: true,
   /**
    * null = follow the OS setting, true/false = an explicit choice.

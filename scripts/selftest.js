@@ -247,7 +247,7 @@ console.log('\n=== 11. Leaderboard replay codes ===');
   check('puzzle code is stable', puzzleCode('easy-test') === puzzleCode('easy-test'));
 }
 
-console.log('\n=== 12. Colour tool behavior ===');
+console.log('\n=== 12. Color tool behavior ===');
 {
   const engine = new GameEngine();
   check('first swatch applies to a tile', engine.applyColor(new Set([0]), 0) && engine.colors[0] === 1);
@@ -260,9 +260,9 @@ console.log('\n=== 13. Keyboard shortcuts ===');
   check('plain digit key enters its digit', digitFromKeyEvent({ key: '7', code: 'Digit7' }) === 7);
   check('Shift+digit resolves through its physical key code', digitFromKeyEvent({ key: '&', code: 'Digit7', shiftKey: true }) === 7);
   check('numpad digit resolves through its physical key code', digitFromKeyEvent({ key: 'End', code: 'Numpad1' }) === 1);
-  check('QWERTY colour keys map Q through O to colours 1 through 9',
+  check('QWERTY color keys map Q through O to colors 1 through 9',
     ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o'].every((key, index) => colorDigitFromKey(key) === index + 1));
-  check('unmapped colour key is ignored', colorDigitFromKey('p') === 0);
+  check('unmapped color key is ignored', colorDigitFromKey('p') === 0);
 }
 
 console.log(`\n${failures === 0 ? 'ALL TESTS PASSED' : `${failures} TEST(S) FAILED`}\n`);
