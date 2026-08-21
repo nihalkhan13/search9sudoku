@@ -10,6 +10,7 @@
 
 import { CELLS, SIZE, NO_ARROW, rowOf, colOf, indexOf } from '../core/constants.js';
 import { MODE } from '../core/GameEngine.js';
+import { DIFFICULTY } from '../core/Generator.js';
 import { COUNTRIES, DEFAULT_COUNTRY, US_STATES } from '../core/locations.js';
 import { puzzleCode } from '../core/puzzleCode.js';
 import { formatTime } from './Timer.js';
@@ -930,6 +931,22 @@ export class UIController {
     }
     const title = document.getElementById('leaderboard-title');
     if (title) title.textContent = scope === 'daily' || mode !== 'practice' ? 'Daily leaderboard' : 'Practice leaderboard';
+    const summary = document.getElementById('leaderboard-player-summary');
+    if (summary) {
+      const playerStats = options.playerStats;
+      if (!playerStats) {
+        summary.hidden = true;
+        summary.textContent = '';
+      } else {
+        const match = entries.find((entry) =>
+          (playerStats.userId && entry.userId === playerStats.userId) ||
+          (entry.username === playerStats.username && Number(entry.timeMs) === Number(playerStats.timeMs) && Number(entry.checkCount) === Number(playerStats.checkCount))
+        );
+        const rank = match ? `Rank #${match.rank ?? entries.indexOf(match) + 1}` : 'Not ranked in the top 50';
+        summary.hidden = false;
+        summary.innerHTML = `<strong>Your solve</strong> · ${escapeHtml(DIFFICULTY[playerStats.difficulty]?.label ?? playerStats.difficulty ?? 'Puzzle')} · ${formatTime(playerStats.timeMs)} · ${playerStats.checkCount} checks · ${rank}`;
+      }
+    }
     if (!entries.length) {
       body.innerHTML = `<p class="empty-state">No scores yet. Be the first to solve ${mode === 'practice' ? 'a puzzle at this difficulty' : 'today\'s puzzle'}.</p>`;
       return;

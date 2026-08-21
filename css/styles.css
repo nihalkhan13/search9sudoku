@@ -989,6 +989,17 @@ kbd {
 .leaderboard-code.is-unavailable:hover { background: transparent; text-decoration: none; }
 .leaderboard-remove { display: inline-grid; place-items: center; flex: 0 0 20px; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--ink-soft); font: inherit; font-size: 16px; line-height: 1; cursor: pointer; }
 .leaderboard-remove:hover { background: rgba(185, 42, 72, .12); color: var(--maroon); }
+.leaderboard-player-summary {
+  margin: 0 0 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--control-ink);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.leaderboard-player-summary strong { color: var(--purple); }
 .empty-state { padding: 24px 8px; text-align: center; color: var(--ink-soft); }
 .friend-add { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin-top: 14px; }
 .friend-add .action-btn { flex: 0 0 auto; width: auto; margin-top: 0; }

@@ -187,7 +187,7 @@ function saveProgress() {
 
 /* --------------------------------------------------------------- victory */
 
-function onSolved() {
+async function onSolved() {
   if (solvedThisRound) return;
   if (!engine.isComplete()) return;
   solvedThisRound = true;
@@ -203,7 +203,9 @@ function onSolved() {
   storage.clearCurrentGame();
   ui.renderStats(stats);
 
-  // Fire-and-forget; no-ops until a backend is configured in ApiService.
+  // No-ops until a backend is configured in ApiService, but we await this for
+  // Daily solves so the just-finished result is present before the leaderboard
+  // popup loads.
   const score = {
     puzzleId: engine.puzzle.id,
     timeMs: elapsed,
@@ -215,13 +217,37 @@ function onSolved() {
     grid: Array.from(engine.values).join(''),
   };
   storage.saveLocalScore({ ...score, userId: activeUser?.id ?? 'local-guest', username: activeUser?.username ?? 'Guest' });
-  submitScore(score).then((result) => {
+  const scoreSubmission = submitScore(score).then((result) => {
     if (result?._error) {
       ui.flash(result.status === 401 ? 'Score saved here. Sign in to publish it globally.' : 'Score saved here, but could not reach the global board.', 'neutral');
     } else if (result?.accepted && !result?.offline) {
       ui.flash('Score added to the leaderboard', 'good');
     }
-  }).catch(() => {});
+    return result;
+  }).catch(() => null);
+
+  if (isDaily) {
+    const leaderboardBody = document.getElementById('leaderboard-body');
+    if (leaderboardBody) leaderboardBody.innerHTML = '<p class="empty-state">Saving your result…</p>';
+    ui.openDialog('dialog-leaderboard');
+    await scoreSubmission;
+    try {
+      await openLeaderboard('daily', {
+        playerStats: {
+          userId: activeUser?.id ?? 'local-guest',
+          username: activeUser?.username ?? 'Guest',
+          timeMs: elapsed,
+          checkCount,
+          difficulty,
+        },
+      });
+    } catch (error) {
+      if (leaderboardBody) leaderboardBody.innerHTML = '<p class="empty-state">Your result was saved, but the leaderboard could not load.</p>';
+      ui.flash(`Daily complete · ${formatTime(elapsed)} · ${checkCount} checks`, 'good');
+      console.warn('[main] could not open Daily leaderboard:', error.message);
+    }
+    return;
+  }
 
   document.getElementById('victory-time').textContent = formatTime(elapsed);
   document.getElementById('victory-difficulty').textContent =
@@ -281,7 +307,7 @@ async function authLogout() {
   ui.flash('Signed out', 'neutral');
 }
 
-async function openLeaderboard(scope = 'global') {
+async function openLeaderboard(scope = 'global', { playerStats = null } = {}) {
   leaderboardScope = scope;
   let mode = currentMode;
   let puzzleId = currentMode === 'daily' ? engine.puzzle?.id : null;
@@ -311,6 +337,7 @@ async function openLeaderboard(scope = 'global') {
     localLabel,
     viewerId: activeUser?.id,
     isAdmin: activeUser?.username?.toLowerCase() === 'thekhanartist',
+    playerStats,
   });
 }
 
