@@ -233,6 +233,7 @@ async function onSolved() {
     await scoreSubmission;
     try {
       await openLeaderboard('daily', {
+        dailySeed: seed,
         playerStats: {
           userId: activeUser?.id ?? 'local-guest',
           username: activeUser?.username ?? 'Guest',
@@ -307,7 +308,7 @@ async function authLogout() {
   ui.flash('Signed out', 'neutral');
 }
 
-async function openLeaderboard(scope = 'global', { playerStats = null } = {}) {
+async function openLeaderboard(scope = 'global', { dailySeed = null, playerStats = null } = {}) {
   leaderboardScope = scope;
   let mode = currentMode;
   let puzzleId = currentMode === 'daily' ? engine.puzzle?.id : null;
@@ -317,7 +318,7 @@ async function openLeaderboard(scope = 'global', { playerStats = null } = {}) {
   // The Daily tab is available from any puzzle, so resolve today's daily
   // identity before asking the API for its exact board.
   if (scope === 'daily') {
-    const seed = currentDailySeed();
+    const seed = dailySeed ?? currentDailySeed();
     difficulty = dailyDifficulty(seed);
     const daily = await fetchDailyPuzzle(seed, difficulty);
     puzzleId = daily.id;
