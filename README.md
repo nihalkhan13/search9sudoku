@@ -130,8 +130,10 @@ positions on a random board, arrows alone rarely pin a grid down. Tune the trade
 ### Daily puzzles
 
 `todaySeed()` produces `YYYY-MM-DD`, which seeds the PRNG. Same date in, same puzzle out —
-so every player gets an identical board with no server involved. The test suite asserts
-this determinism.
+so every player gets an identical board with no server involved. The daily difficulty is
+also a date-seeded random choice between Medium and Hard, which keeps the choice
+synchronized for everyone while varying it from day to day. The test suite asserts this
+determinism and verifies that generated daily puzzles have one solution without checks.
 
 ---
 

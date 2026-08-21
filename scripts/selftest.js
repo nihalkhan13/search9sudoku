@@ -202,10 +202,13 @@ console.log('\n=== 8. Performance ===');
 
 console.log('\n=== 3c. Daily puzzle difficulty and solvability ===');
 {
-  const dailySeeds = ['2026-08-20', '2026-08-21', '2026-08-22', '2026-08-23', '2026-08-24', '2026-08-25'];
-  const dailyBatch = dailySeeds.map((seed) => generatePuzzle({ difficulty: dailyDifficulty(seed), seed }));
-  check('today\'s reset daily is medium', dailyDifficulty('2026-08-20') === 'medium');
-  check('future daily puzzles stay hard', dailyDifficulty('2026-08-21') === 'hard');
+  const dailySeeds = Array.from({ length: 30 }, (_, index) => `2026-08-${String(index + 1).padStart(2, '0')}`);
+  const dailyDifficulties = dailySeeds.map((seed) => dailyDifficulty(seed));
+  const solvabilitySeeds = dailySeeds.slice(19, 25);
+  const dailyBatch = solvabilitySeeds.map((seed) => generatePuzzle({ difficulty: dailyDifficulty(seed), seed }));
+  check('daily difficulty is always Medium or Hard', dailyDifficulties.every((difficulty) => difficulty === 'medium' || difficulty === 'hard'));
+  check('daily difficulty is deterministic per date', dailyDifficulty('2026-08-20') === dailyDifficulty('2026-08-20'));
+  check('daily difficulty samples both Medium and Hard', new Set(dailyDifficulties).size === 2);
   check(
     'daily puzzles are uniquely solvable without checks',
     dailyBatch.every((puzzle) => {
@@ -218,10 +221,9 @@ console.log('\n=== 3c. Daily puzzle difficulty and solvability ===');
 console.log('\n=== 9. Product rules ===');
 {
   check(
-    'daily difficulty applies the reset override and Hard default',
-    dailyDifficulty('2026-08-19') === 'hard' &&
-    dailyDifficulty('2026-08-20') === 'medium' &&
-    dailyDifficulty('2026-08-21') === 'hard'
+    'daily difficulty remains date-seeded',
+    dailyDifficulty('2026-08-19') === dailyDifficulty('2026-08-19') &&
+    dailyDifficulty('2026-08-21') === dailyDifficulty('2026-08-21')
   );
   const clean = { timeMs: 120000, checkCount: 0 };
   const checked = { timeMs: 1000, checkCount: 1 };

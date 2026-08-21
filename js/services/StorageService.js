@@ -23,9 +23,9 @@ const KEYS = {
   DAILY_RESET: `${PREFIX}daily-reset`,
 };
 
-// The new Medium puzzle replaces today's earlier daily, so old local state
-// must not make the user appear already finished after the reset.
-const DAILY_RESET_VERSION = '2026-08-20-medium-v1';
+// The daily difficulty rule changed, so old local state must not make the user
+// appear already finished on a puzzle from the previous daily version.
+const DAILY_RESET_VERSION = '2026-08-20-medium-hard-random-v2';
 const DAILY_RESET_SEED = '2026-08-20';
 
 export const DEFAULT_SETTINGS = Object.freeze({

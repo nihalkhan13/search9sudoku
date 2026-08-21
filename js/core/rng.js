@@ -84,18 +84,11 @@ export function todaySeedInTimeZone(timeZone, date = new Date()) {
 }
 
 /**
- * One-time date-specific adjustments. The current daily is intentionally
- * reset to Medium; future dates keep the normal Hard daily rule.
- */
-export const DAILY_DIFFICULTY_OVERRIDES = Object.freeze({
-  '2026-08-20': 'medium',
-});
-
-/**
- * Return the verified difficulty for a daily seed. The date argument remains
- * part of the public API so location-aware seeds and score submissions use
- * one shared rule.
+ * Return the verified difficulty for a daily seed. The date-seeded choice is
+ * random-looking but deterministic, so every player receives the same
+ * difficulty and puzzle on a given day.
  */
 export function dailyDifficulty(dateSeed = todaySeed()) {
-  return DAILY_DIFFICULTY_OVERRIDES[String(dateSeed)] ?? 'hard';
+  const rng = createRng(`daily-difficulty:${String(dateSeed)}`);
+  return rng.int(2) === 0 ? 'medium' : 'hard';
 }
