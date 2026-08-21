@@ -40,7 +40,8 @@
     </div>
     <p class="board-hint" aria-live="polite">
       Click or drag to select · <kbd>1</kbd>–<kbd>9</kbd> to enter ·
-      <kbd>Shift</kbd>+digit for corner marks · <kbd>Ctrl</kbd>+digit for centre marks
+      <kbd>Shift</kbd>+digit for corner marks · <kbd>Ctrl</kbd>+digit for centre marks ·
+      <kbd>Q</kbd>–<kbd>O</kbd> for colours
     </p>
   </main>
 
@@ -106,15 +107,15 @@
     <!-- Numpad -->
     <div class="numpad">
       <div class="digits">
-        <button class="num-btn" data-digit="1">1</button>
-        <button class="num-btn" data-digit="2">2</button>
-        <button class="num-btn" data-digit="3">3</button>
-        <button class="num-btn" data-digit="4">4</button>
-        <button class="num-btn" data-digit="5">5</button>
-        <button class="num-btn" data-digit="6">6</button>
-        <button class="num-btn" data-digit="7">7</button>
-        <button class="num-btn" data-digit="8">8</button>
-        <button class="num-btn" data-digit="9">9</button>
+        <button class="num-btn" data-digit="1" data-color-key="q"><span class="digit-value">1</span><span class="color-key" aria-hidden="true">Q</span></button>
+        <button class="num-btn" data-digit="2" data-color-key="w"><span class="digit-value">2</span><span class="color-key" aria-hidden="true">W</span></button>
+        <button class="num-btn" data-digit="3" data-color-key="e"><span class="digit-value">3</span><span class="color-key" aria-hidden="true">E</span></button>
+        <button class="num-btn" data-digit="4" data-color-key="r"><span class="digit-value">4</span><span class="color-key" aria-hidden="true">R</span></button>
+        <button class="num-btn" data-digit="5" data-color-key="t"><span class="digit-value">5</span><span class="color-key" aria-hidden="true">T</span></button>
+        <button class="num-btn" data-digit="6" data-color-key="y"><span class="digit-value">6</span><span class="color-key" aria-hidden="true">Y</span></button>
+        <button class="num-btn" data-digit="7" data-color-key="u"><span class="digit-value">7</span><span class="color-key" aria-hidden="true">U</span></button>
+        <button class="num-btn" data-digit="8" data-color-key="i"><span class="digit-value">8</span><span class="color-key" aria-hidden="true">I</span></button>
+        <button class="num-btn" data-digit="9" data-color-key="o"><span class="digit-value">9</span><span class="color-key" aria-hidden="true">O</span></button>
         <button class="num-btn num-wide" id="btn-delete" title="Delete (Backspace)">
           <svg viewBox="0 0 24 24"><path d="M20 5H9l-5 7 5 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2m-1.5 10.09-1.41 1.41L14 13.41 11.91 15.5 10.5 14.09 12.59 12 10.5 9.91l1.41-1.41L14 10.59l2.09-2.09 1.41 1.41L15.41 12Z"/></svg>
         </button>
@@ -133,7 +134,7 @@
           <span class="mode-glyph mode-glyph-center">12</span>
           <span class="mode-label">Centre</span>
         </button>
-        <button class="mode-btn" type="button" data-mode="color" title="Colour highlight (V)" aria-pressed="false">
+        <button class="mode-btn" type="button" data-mode="color" title="Colour highlight (V, then Q–O)" aria-pressed="false">
           <span class="mode-glyph mode-glyph-color" aria-hidden="true"></span>
           <span class="mode-label">Colour</span>
         </button>
@@ -218,6 +219,7 @@
   <ul class="rule-list">
     <li>Click, or click-and-drag, to select cells. <kbd>Shift</kbd> or <kbd>Ctrl</kbd> extends the selection.</li>
     <li><kbd>1</kbd>–<kbd>9</kbd> enters a digit · <kbd>Shift</kbd>+digit for corner marks · <kbd>Ctrl</kbd>+digit for centre marks.</li>
+    <li>In Colour mode, press <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> <kbd>I</kbd> <kbd>O</kbd> for colours 1–9.</li>
     <li><kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> switch entry mode · <kbd>Space</kbd> cycles.</li>
     <li><kbd>Backspace</kbd> clears · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Esc</kbd> deselects.</li>
     <li><kbd>H</kbd> hides or shows your cell colours (they are kept, not erased) · <kbd>D</kbd> toggles dark mode.</li>

@@ -14,11 +14,28 @@ import { COUNTRIES, DEFAULT_COUNTRY, US_STATES } from '../core/locations.js';
 import { puzzleCode } from '../core/puzzleCode.js';
 import { formatTime } from './Timer.js';
 
-/** Palette for the colour tool - index matches numpad keys 1..9. */
+/** Palette for the colour tool - index matches digit keys 1..9. */
 export const PALETTE = [
   '#f8f9fa', '#c9d1d9', '#8d99ae', '#f4978e', '#ffd166',
   '#a8dadc', '#8ecae6', '#b8bedd', '#c8b6e2',
 ];
+
+/** Colour-mode keyboard shortcuts, in palette order. */
+export const COLOR_KEYS = Object.freeze(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o']);
+
+/** Resolve a physical number-row or numpad key to a digit. */
+export function digitFromKeyEvent(event) {
+  const code = String(event?.code ?? '');
+  const physical = code.match(/^(?:Digit|Numpad)([1-9])$/);
+  if (physical) return Number(physical[1]);
+  return /^[1-9]$/.test(String(event?.key ?? '')) ? Number(event.key) : 0;
+}
+
+/** Resolve a QWERTY colour shortcut to its palette digit. */
+export function colorDigitFromKey(key) {
+  const index = COLOR_KEYS.indexOf(String(key ?? '').toLowerCase());
+  return index < 0 ? 0 : index + 1;
+}
 
 const ARROW_PATH = 'M50 6 L92 48 L68 48 L68 94 L32 94 L32 48 L8 48 Z';
 
@@ -520,15 +537,29 @@ export class UIController {
         return;
       }
 
-      // Digits. Shift -> corner marks, Ctrl/Cmd -> centre marks, matching
+      // Digits. Use `code` because Shift changes e.key from "1" to "!" (and
+      // so on). Shift -> corner marks, Ctrl/Cmd -> centre marks, matching
       // the muscle memory of other competitive Sudoku apps.
-      if (/^[1-9]$/.test(e.key)) {
+      const digit = digitFromKeyEvent(e);
+      if (digit) {
         e.preventDefault();
         let mode = this.mode;
         if (e.shiftKey) mode = MODE.CORNER;
         else if (mod) mode = MODE.CENTER;
-        this.pressDigit(Number(e.key), mode);
+        this.pressDigit(digit, mode);
         return;
+      }
+
+      // QWERTY home-row shortcuts make the nine colours quick to reach while
+      // the Colour mode is active. Modifiers are intentionally ignored so
+      // browser/app shortcuts still win.
+      if (this.mode === MODE.COLOR && !mod && !e.shiftKey && !e.altKey) {
+        const colorDigit = colorDigitFromKey(e.key);
+        if (colorDigit) {
+          e.preventDefault();
+          this.pressDigit(colorDigit, MODE.COLOR);
+          return;
+        }
       }
 
       switch (e.key) {
@@ -788,6 +819,15 @@ export class UIController {
       btn.classList.toggle('is-swatch', colorMode);
       const d = Number(btn.dataset.digit);
       btn.style.setProperty('--swatch', PALETTE[d - 1] ?? 'transparent');
+      btn.title = colorMode
+        ? `Colour ${d} (${String(btn.dataset.colorKey ?? '').toUpperCase()})`
+        : `Enter ${d}`;
+      btn.setAttribute(
+        'aria-label',
+        colorMode
+          ? `Colour ${d}, ${String(btn.dataset.colorKey ?? '').toUpperCase()}`
+          : `Enter ${d}`
+      );
     }
 
     this.dom.undo.disabled = !this.engine.canUndo;

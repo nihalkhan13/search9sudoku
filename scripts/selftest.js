@@ -18,6 +18,7 @@ import { timezoneForLocation } from '../js/core/locations.js';
 import { scoreCompare } from '../js/services/StorageService.js';
 import { GameEngine } from '../js/core/GameEngine.js';
 import { puzzleCode } from '../js/core/puzzleCode.js';
+import { colorDigitFromKey, digitFromKeyEvent } from '../js/ui/UIController.js';
 
 let failures = 0;
 function check(name, cond, detail = '') {
@@ -252,6 +253,16 @@ console.log('\n=== 12. Colour tool behavior ===');
   check('first swatch applies to a tile', engine.applyColor(new Set([0]), 0) && engine.colors[0] === 1);
   check('second swatch replaces the first', engine.applyColor(new Set([0]), 1) && engine.colors[0] === 2);
   check('clicking the active swatch clears the tile', engine.applyColor(new Set([0]), 1) && engine.colors[0] === 0);
+}
+
+console.log('\n=== 13. Keyboard shortcuts ===');
+{
+  check('plain digit key enters its digit', digitFromKeyEvent({ key: '7', code: 'Digit7' }) === 7);
+  check('Shift+digit resolves through its physical key code', digitFromKeyEvent({ key: '&', code: 'Digit7', shiftKey: true }) === 7);
+  check('numpad digit resolves through its physical key code', digitFromKeyEvent({ key: 'End', code: 'Numpad1' }) === 1);
+  check('QWERTY colour keys map Q through O to colours 1 through 9',
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o'].every((key, index) => colorDigitFromKey(key) === index + 1));
+  check('unmapped colour key is ignored', colorDigitFromKey('p') === 0);
 }
 
 console.log(`\n${failures === 0 ? 'ALL TESTS PASSED' : `${failures} TEST(S) FAILED`}\n`);
