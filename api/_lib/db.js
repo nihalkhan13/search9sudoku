@@ -5,6 +5,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
 export const ADMIN_USERNAME = 'thekhanartist';
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 365;
 
 export function ready() {
   return Boolean(SUPABASE_URL && SUPABASE_KEY && SESSION_SECRET);
@@ -46,7 +47,7 @@ function b64(value) { return Buffer.from(value).toString('base64url'); }
 function unb64(value) { return Buffer.from(value, 'base64url').toString('utf8'); }
 
 export function issueToken(user) {
-  const payload = { sub: user.id, username: user.username, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 };
+  const payload = { sub: user.id, username: user.username, exp: Date.now() + SESSION_TTL_MS };
   const body = b64(JSON.stringify(payload));
   const signature = b64(crypto.createHmac('sha256', SESSION_SECRET ?? 'missing').update(body).digest());
   return `${body}.${signature}`;

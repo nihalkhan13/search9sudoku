@@ -18,6 +18,7 @@ const KEYS = {
   AUTH_USERS: `${PREFIX}auth-users`,
   SESSION: `${PREFIX}session`,
   LOCAL_SCORES: `${PREFIX}local-scores`,
+  PENDING_SCORES: `${PREFIX}pending-scores`,
   FRIENDS: `${PREFIX}friends`,
   DAILY_OPENS: `${PREFIX}daily-opens`,
   DAILY_RESET: `${PREFIX}daily-reset`,
@@ -296,6 +297,32 @@ export class StorageService {
     scores.sort((a, b) => scoreCompare(a, b));
     this._write(KEYS.LOCAL_SCORES, scores.slice(0, 500));
     return scores;
+  }
+
+  /** Keep a score queued until the online account/backend is available. */
+  queuePendingScore(entry) {
+    if (!entry?.puzzleId) return [];
+    const pending = this._read(KEYS.PENDING_SCORES, []);
+    const existingIndex = pending.findIndex((score) => score.puzzleId === entry.puzzleId);
+    if (existingIndex >= 0) {
+      if (scoreCompare(entry, pending[existingIndex]) < 0) pending[existingIndex] = { ...entry, queuedAt: Date.now() };
+    } else {
+      pending.push({ ...entry, queuedAt: Date.now() });
+    }
+    pending.sort((a, b) => scoreCompare(a, b));
+    this._write(KEYS.PENDING_SCORES, pending.slice(0, 100));
+    return pending;
+  }
+
+  getPendingScores() {
+    return this._read(KEYS.PENDING_SCORES, []);
+  }
+
+  removePendingScore(puzzleId) {
+    const pending = this._read(KEYS.PENDING_SCORES, []);
+    const remaining = pending.filter((score) => score.puzzleId !== puzzleId);
+    this._write(KEYS.PENDING_SCORES, remaining);
+    return remaining;
   }
 
   removeLocalScore({ scoreId = null, puzzleId = null, userId = null } = {}) {

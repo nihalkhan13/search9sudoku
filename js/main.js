@@ -24,6 +24,7 @@ import {
   playAsGuest,
   logout,
   submitScore,
+  syncPendingScores,
   fetchLeaderboard,
   addFriend,
   removeScore,
@@ -276,7 +277,9 @@ async function authLogin(username, password) {
   if (!user) throw new Error('Username or password not recognised');
   activeUser = user;
   ui.renderUser(activeUser);
+  const synced = await syncPendingScores();
   ui.flash(`Welcome back, ${user.username}`, 'good');
+  if (synced) ui.flash(`${synced} saved score${synced === 1 ? '' : 's'} added to the leaderboard`, 'good');
 }
 
 async function authRegister(username, password, location) {
@@ -284,7 +287,9 @@ async function authRegister(username, password, location) {
   if (!user) throw new Error('Choose a new username and a password of 6+ characters');
   activeUser = user;
   ui.renderUser(activeUser);
+  const synced = await syncPendingScores();
   ui.flash(`Account created for ${user.username}`, 'good');
+  if (synced) ui.flash(`${synced} saved score${synced === 1 ? '' : 's'} added to the leaderboard`, 'good');
 }
 
 async function authUpdateProfile(location) {
@@ -432,6 +437,10 @@ async function boot() {
       getCheckCount: () => checkCount,
     },
   });
+  if (activeUser) {
+    const synced = await syncPendingScores();
+    if (synced) ui.flash(`${synced} saved score${synced === 1 ? '' : 's'} added to the leaderboard`, 'good');
+  }
   watchDailyRollover();
 
   document.getElementById('btn-victory-new').addEventListener('click', () => {

@@ -39,6 +39,11 @@ function persistSession(payload) {
 
 export function currentUser() { return storage.loadSession()?.user ?? null; }
 
+export function hasRemoteSession() {
+  const session = storage.loadSession();
+  return Boolean(session?.token && !session.user?.local && !session.user?.guest);
+}
+
 export async function login(username, password) {
   const remote = await request('/auth', { method: 'POST', body: JSON.stringify({ action: 'login', username, password }) });
   if (remote?._error && remote.status !== 503) throw new Error(remote._error);
@@ -83,8 +88,26 @@ export async function logout() {
 
 export async function submitScore(entry) {
   const remote = await request('/scores', { method: 'POST', body: JSON.stringify(entry) });
-  if (remote) return remote;
-  return { accepted: true, offline: true };
+  if (!remote || remote._error) {
+    storage.queuePendingScore(entry);
+    return remote ?? { accepted: false, offline: true, pending: true };
+  }
+  if (typeof remote.accepted === 'boolean') storage.removePendingScore(entry.puzzleId);
+  return remote;
+}
+
+/** Retry scores saved during a temporary outage or before sign-in. */
+export async function syncPendingScores() {
+  if (!hasRemoteSession()) return 0;
+  let synced = 0;
+  for (const entry of storage.getPendingScores()) {
+    const remote = await request('/scores', { method: 'POST', body: JSON.stringify(entry) });
+    if (remote && !remote._error) {
+      storage.removePendingScore(entry.puzzleId);
+      synced += 1;
+    }
+  }
+  return synced;
 }
 
 export async function fetchLeaderboard({ puzzleId, difficulty, mode = 'daily', scope = 'global', limit = 50 } = {}) {
