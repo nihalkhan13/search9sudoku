@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   if (!user) return send(res, 401, { error: 'Sign in to submit a global score' });
   try {
     const body = await readBody(req);
-    const difficulty = ['easy', 'medium', 'hard'].includes(body.difficulty) ? body.difficulty : 'medium';
+    const difficulty = ['easy', 'medium', 'hard', 'extreme'].includes(body.difficulty) ? body.difficulty : 'medium';
     const checkCount = Math.max(0, Number(body.checkCount) || 0);
     const timeMs = Math.max(1, Math.round(Number(body.timeMs) || 0));
     const puzzleId = String(body.puzzleId ?? '');

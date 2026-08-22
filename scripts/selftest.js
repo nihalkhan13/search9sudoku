@@ -131,6 +131,18 @@ console.log('\n=== 3b. Hard puzzle clue floor ===');
       return result.count === 1 && !result.exhausted && result.solution?.join('') === p.solution.join('');
     })
   );
+
+  const extremeBatch = Array.from({ length: 8 }, (_, n) => generatePuzzle({ difficulty: 'extreme', seed: `extreme-audit-${n}` }));
+  const hardAverage = hardBatch.reduce((total, puzzle) => total + puzzle.stats.givenCount, 0) / hardBatch.length;
+  const extremeAverage = extremeBatch.reduce((total, puzzle) => total + puzzle.stats.givenCount, 0) / extremeBatch.length;
+  check('extreme puzzles use fewer starting digits than hard on average', extremeAverage < hardAverage);
+  check(
+    'extreme puzzles remain uniquely solvable without checks',
+    extremeBatch.every((p) => {
+      const result = solve(p.grid, p.arrows, { limit: 2, maxNodes: 2000000 });
+      return result.count === 1 && !result.exhausted && result.solution?.join('') === p.solution.join('');
+    })
+  );
 }
 
 console.log('\n=== 4. Determinism (Daily Puzzle guarantee) ===');

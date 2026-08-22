@@ -150,16 +150,16 @@ export class StorageService {
   /**
    * Stats shape:
    * {
-   *   solved: { easy: n, medium: n, hard: n },
-   *   best:   { easy: ms, medium: ms, hard: ms },
+   *   solved: { easy: n, medium: n, hard: n, extreme: n },
+   *   best:   { easy: ms, medium: ms, hard: ms, extreme: ms },
    *   totalMs, totalSolved,
    *   streak: { current, best, lastDate }
    * }
    */
   loadStats() {
     return this._read(KEYS.STATS, {
-      solved: { easy: 0, medium: 0, hard: 0 },
-      best: { easy: null, medium: null, hard: null },
+      solved: { easy: 0, medium: 0, hard: 0, extreme: 0 },
+      best: { easy: null, medium: null, hard: null, extreme: null },
       totalMs: 0,
       totalSolved: 0,
       totalChecks: 0,

@@ -87,7 +87,7 @@ export async function fetchDailyPuzzle(dateSeed = todaySeed(), difficulty = 'med
 
 /**
  * A fresh practice puzzle.
- * @param {string} difficulty 'easy' | 'medium' | 'hard'
+ * @param {string} difficulty 'easy' | 'medium' | 'hard' | 'extreme'
  * @param {string} [seed] omit for a random one
  */
 export async function fetchPracticePuzzle(difficulty = 'medium', seed) {

@@ -23,7 +23,7 @@ create table if not exists public.scores (
   puzzle_id text not null,
   puzzle_seed text,
   date_seed date,
-  difficulty text not null check (difficulty in ('easy', 'medium', 'hard')),
+  difficulty text not null check (difficulty in ('easy', 'medium', 'hard', 'extreme')),
   time_ms integer not null check (time_ms > 0),
   check_count integer not null default 0 check (check_count >= 0),
   grid text not null,
@@ -35,6 +35,10 @@ create index if not exists scores_puzzle_idx on public.scores (puzzle_id, create
 
 -- Safe migration for scores created before replayable puzzle codes were added.
 alter table public.scores add column if not exists puzzle_seed text;
+
+-- Safe migration for the original three-difficulty constraint.
+alter table public.scores drop constraint if exists scores_difficulty_check;
+alter table public.scores add constraint scores_difficulty_check check (difficulty in ('easy', 'medium', 'hard', 'extreme'));
 
 create table if not exists public.friendships (
   user_id uuid not null references public.users(id) on delete cascade,

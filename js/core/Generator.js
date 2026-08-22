@@ -59,6 +59,15 @@ export const DIFFICULTY = Object.freeze({
     extraGivens: 6,
     boardSamples: 500,
   },
+  extreme: {
+    label: 'Extreme',
+    stripArrows: true,
+    minArrows: 0,
+    // Keep only a couple of supplemental digits. The remaining clues are
+    // still guaranteed to have exactly one solution by the carving pass.
+    extraGivens: 2,
+    boardSamples: 700,
+  },
 });
 
 /* -------------------------------------------------------------------------
@@ -149,7 +158,7 @@ export function arrowOptions(solution) {
  * Generate a complete Search Nine puzzle.
  *
  * @param {object} opts
- * @param {'easy'|'medium'|'hard'} opts.difficulty
+ * @param {'easy'|'medium'|'hard'|'extreme'} opts.difficulty
  * @param {string} opts.seed        deterministic seed (date string for dailies)
  * @param {number} opts.maxAttempts retries before giving up on a solution board
  * @returns {{

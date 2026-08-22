@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   const scope = url.searchParams.get('scope') ?? 'global';
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 50));
   if (mode === 'daily' && !puzzleId) return send(res, 400, { error: 'puzzleId required for a daily leaderboard' });
-  if (mode === 'practice' && !['easy', 'medium', 'hard'].includes(difficulty)) return send(res, 400, { error: 'difficulty required for a practice leaderboard' });
+  if (mode === 'practice' && !['easy', 'medium', 'hard', 'extreme'].includes(difficulty)) return send(res, 400, { error: 'difficulty required for a practice leaderboard' });
 
   try {
     const dailySeed = mode === 'daily' && /^daily-\d{4}-\d{2}-\d{2}$/.test(String(puzzleId))
