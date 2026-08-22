@@ -947,11 +947,25 @@ export class UIController {
         summary.innerHTML = `<strong>Your solve</strong> · ${escapeHtml(DIFFICULTY[playerStats.difficulty]?.label ?? playerStats.difficulty ?? 'Puzzle')} · ${formatTime(playerStats.timeMs)} · ${playerStats.checkCount} checks · ${rank}`;
       }
     }
+    const statStrip = document.getElementById('leaderboard-stat-strip');
+    if (statStrip) {
+      if (!entries.length) {
+        statStrip.hidden = true;
+        statStrip.textContent = '';
+      } else {
+        const cleanCount = entries.filter((entry) => Number(entry.checkCount ?? 0) === 0).length;
+        const checkedCount = entries.length - cleanCount;
+        const bestTime = Math.min(...entries.map((entry) => Number(entry.timeMs) || Infinity));
+        const averageTime = Math.round(entries.reduce((total, entry) => total + (Number(entry.timeMs) || 0), 0) / entries.length);
+        statStrip.hidden = false;
+        statStrip.innerHTML = `<span><strong>${entries.length}</strong> shown</span><span><strong>${cleanCount}</strong> clean</span><span><strong>${checkedCount}</strong> checked</span><span>Best <strong>${formatTime(bestTime)}</strong></span><span>Avg <strong>${formatTime(averageTime)}</strong></span>`;
+      }
+    }
     if (!entries.length) {
       body.innerHTML = `<p class="empty-state">No scores yet. Be the first to solve ${mode === 'practice' ? 'a puzzle at this difficulty' : 'today\'s puzzle'}.</p>`;
       return;
     }
-    body.innerHTML = `<div class="leaderboard-scroll"><table class="leaderboard-table"><thead><tr><th>#</th><th>Puzzle</th><th>Player</th><th>Difficulty</th><th>State</th><th>Time</th><th>Checks</th></tr></thead><tbody>${entries.map((entry, index) => {
+    body.innerHTML = `<div class="leaderboard-scroll"><table class="leaderboard-table"><thead><tr><th>#</th><th>Puzzle</th><th>Player</th><th>Difficulty</th><th>State</th><th>Scored</th><th>Time</th><th>Checks</th></tr></thead><tbody>${entries.map((entry, index) => {
       const code = entry.puzzleCode ?? puzzleCode(entry.puzzleId);
       const replayable = Boolean(entry.puzzleSeed || entry.dateSeed);
       const puzzleCell = replayable
@@ -962,11 +976,25 @@ export class UIController {
         ? `<span class="leaderboard-player-cell"><button class="leaderboard-user" type="button" data-friend-username="${player}" title="Add ${player} as a friend">${player}</button>${(options.isAdmin || (options.viewerId && entry.userId === options.viewerId)) ? `<button class="leaderboard-remove" type="button" data-remove-score data-score-id="${escapeHtml(entry.scoreId ?? '')}" data-puzzle-id="${escapeHtml(entry.puzzleId ?? '')}" data-user-id="${escapeHtml(entry.userId ?? '')}" data-puzzle-code="${escapeHtml(code)}" title="Remove ${player}'s score" aria-label="Remove ${player}'s score">×</button>` : ''}</span>`
         : player;
       const location = entry.state ?? entry.country ?? '—';
-      return `<tr class="${Number(entry.checkCount ?? 0) === 0 ? 'is-clean' : ''}"><td>${entry.rank ?? index + 1}</td><td>${puzzleCell}</td><td>${playerCell}</td><td>${escapeHtml(entry.difficulty ?? '—')}</td><td>${escapeHtml(location)}</td><td>${formatTime(entry.timeMs)}</td><td>${entry.checkCount ?? 0}</td></tr>`;
+      const scoredAt = entry.playedAt ?? entry.createdAt;
+      const scoredDate = formatScoreDate(scoredAt);
+      const checkCount = Number(entry.checkCount ?? 0);
+      const checkLabel = checkCount === 0 ? '<span class="leaderboard-clean-badge">Clean</span>' : `${checkCount}`;
+      return `<tr class="${checkCount === 0 ? 'is-clean' : ''}"><td>${entry.rank ?? index + 1}</td><td>${puzzleCell}</td><td>${playerCell}</td><td>${escapeHtml(entry.difficulty ?? '—')}</td><td>${escapeHtml(location)}</td><td><time class="leaderboard-date" datetime="${escapeHtml(scoredAt ?? '')}" title="${escapeHtml(formatScoreDateLong(scoredAt))}">${escapeHtml(scoredDate)}</time></td><td>${formatTime(entry.timeMs)}</td><td>${checkLabel}</td></tr>`;
     }).join('')}</tbody></table></div>`;
   }
 }
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+}
+
+function formatScoreDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat(undefined, { month: 'numeric', day: 'numeric', year: '2-digit' }).format(date);
+}
+
+function formatScoreDateLong(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Date unavailable' : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }

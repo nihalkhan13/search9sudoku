@@ -212,6 +212,7 @@ async function onSolved() {
     timeMs: elapsed,
     checkCount,
     difficulty,
+    playedAt: new Date().toISOString(),
     dateSeed: engine.puzzle.dateSeed ?? null,
     isDaily,
     puzzleSeed: engine.puzzle.seed,
