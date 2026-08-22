@@ -982,6 +982,18 @@ kbd {
 .leaderboard-table td:nth-child(1), .leaderboard-table td:nth-child(2), .leaderboard-table td:nth-child(4), .leaderboard-table td:nth-child(6), .leaderboard-table td:nth-child(7), .leaderboard-table td:nth-child(8) { font-variant-numeric: tabular-nums; }
 .leaderboard-table tr.is-clean td:first-child { color: var(--green-ink); font-weight: 800; }
 .leaderboard-clean-badge { color: var(--green-ink); font-weight: 800; }
+.leaderboard-group-row th {
+  width: auto !important;
+  padding: 9px 4px 5px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface-2);
+  color: var(--control-ink);
+  font-size: 10px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.leaderboard-group-row th span, .leaderboard-group-row th small { display: inline-block; }
+.leaderboard-group-row th small { float: right; color: var(--ink-soft); font-size: 10px; font-weight: 600; letter-spacing: 0; text-transform: none; }
 .leaderboard-player-cell { display: flex; align-items: center; min-width: 0; gap: 2px; }
 .leaderboard-code, .leaderboard-user { border: 0; border-radius: 6px; padding: 2px 4px; background: transparent; color: var(--purple); font: inherit; font-weight: 750; cursor: pointer; }
 .leaderboard-code:hover, .leaderboard-user:hover { background: var(--hover); text-decoration: underline; }

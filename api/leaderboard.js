@@ -4,6 +4,11 @@ import { db, ready, send, userFromRequest } from './_lib/db.js';
 import { clearStaleDailyScores } from './_lib/dailyReset.js';
 
 function compare(a, b) {
+  // Keep every score for the same puzzle together, then rank players within
+  // that puzzle using the normal clean-solve/time/check rules.
+  const puzzleGroup = puzzleCode(a.puzzle_id).localeCompare(puzzleCode(b.puzzle_id), undefined, { numeric: true })
+    || String(a.puzzle_id ?? '').localeCompare(String(b.puzzle_id ?? ''));
+  if (puzzleGroup) return puzzleGroup;
   const az = Number(a.check_count) === 0;
   const bz = Number(b.check_count) === 0;
   if (az !== bz) return az ? -1 : 1;
@@ -61,6 +66,10 @@ export default async function handler(req, res) {
       ? row.date_seed == null && row.difficulty === difficulty
       : row.puzzle_id === puzzleId && (!verifiedDailyDifficulty || row.difficulty === verifiedDailyDifficulty)).sort(compare).slice(0, limit);
 
+    const puzzleTotals = new Map();
+    const puzzleRanks = new Map();
+    for (const row of rows) puzzleTotals.set(row.puzzle_id, (puzzleTotals.get(row.puzzle_id) ?? 0) + 1);
+
     return send(res, 200, {
       entries: rows.map((row, i) => {
         const profile = profileMap.get(row.user_id) ?? {};
@@ -72,8 +81,13 @@ export default async function handler(req, res) {
             : row.puzzle_id?.startsWith(`${row.difficulty}-`)
               ? row.puzzle_id.slice(String(row.difficulty).length + 1)
               : null);
+        const puzzleRank = (puzzleRanks.get(row.puzzle_id) ?? 0) + 1;
+        puzzleRanks.set(row.puzzle_id, puzzleRank);
         return {
-          rank: i + 1,
+          rank: puzzleRank,
+          overallRank: i + 1,
+          puzzleRank,
+          puzzleTotal: puzzleTotals.get(row.puzzle_id) ?? 1,
           scoreId: row.id,
           userId: row.user_id,
           username: profile.username ?? 'Player',

@@ -927,7 +927,7 @@ export class UIController {
     if (!body) return;
     const labels = { global: 'Global', local: options.localLabel ?? 'Local', friends: 'Friends', daily: 'Daily' };
     if (this.dom.leaderboardMeta) {
-      this.dom.leaderboardMeta.textContent = `${labels[scope] ?? 'Leaderboard'} · ${mode === 'practice' ? 'all practice puzzles' : "today's puzzle"}${offline ? ' · offline preview' : ''}`;
+      this.dom.leaderboardMeta.textContent = `${labels[scope] ?? 'Leaderboard'} · ${mode === 'practice' ? 'practice puzzles grouped by puzzle' : "today's puzzle"}${offline ? ' · offline preview' : ''}`;
     }
     const title = document.getElementById('leaderboard-title');
     if (title) title.textContent = scope === 'daily' || mode !== 'practice' ? 'Daily leaderboard' : 'Practice leaderboard';
@@ -942,7 +942,7 @@ export class UIController {
           (playerStats.userId && entry.userId === playerStats.userId) ||
           (entry.username === playerStats.username && Number(entry.timeMs) === Number(playerStats.timeMs) && Number(entry.checkCount) === Number(playerStats.checkCount))
         );
-        const rank = match ? `Rank #${match.rank ?? entries.indexOf(match) + 1}` : 'Not ranked in the top 50';
+        const rank = match ? `Rank #${match.puzzleRank ?? match.rank ?? entries.indexOf(match) + 1}` : 'Not ranked in the top 50';
         summary.hidden = false;
         summary.innerHTML = `<strong>Your solve</strong> · ${escapeHtml(DIFFICULTY[playerStats.difficulty]?.label ?? playerStats.difficulty ?? 'Puzzle')} · ${formatTime(playerStats.timeMs)} · ${playerStats.checkCount} checks · ${rank}`;
       }
@@ -955,18 +955,27 @@ export class UIController {
       } else {
         const cleanCount = entries.filter((entry) => Number(entry.checkCount ?? 0) === 0).length;
         const checkedCount = entries.length - cleanCount;
+        const puzzleCount = new Set(entries.map((entry) => entry.puzzleId ?? entry.puzzleCode)).size;
         const bestTime = Math.min(...entries.map((entry) => Number(entry.timeMs) || Infinity));
         const averageTime = Math.round(entries.reduce((total, entry) => total + (Number(entry.timeMs) || 0), 0) / entries.length);
         statStrip.hidden = false;
-        statStrip.innerHTML = `<span><strong>${entries.length}</strong> shown</span><span><strong>${cleanCount}</strong> clean</span><span><strong>${checkedCount}</strong> checked</span><span>Best <strong>${formatTime(bestTime)}</strong></span><span>Avg <strong>${formatTime(averageTime)}</strong></span>`;
+        statStrip.innerHTML = `<span><strong>${entries.length}</strong> shown</span><span><strong>${puzzleCount}</strong> puzzle${puzzleCount === 1 ? '' : 's'}</span><span><strong>${cleanCount}</strong> clean</span><span><strong>${checkedCount}</strong> checked</span><span>Best <strong>${formatTime(bestTime)}</strong></span><span>Avg <strong>${formatTime(averageTime)}</strong></span>`;
       }
     }
     if (!entries.length) {
       body.innerHTML = `<p class="empty-state">No scores yet. Be the first to solve ${mode === 'practice' ? 'a puzzle at this difficulty' : 'today\'s puzzle'}.</p>`;
       return;
     }
-    body.innerHTML = `<div class="leaderboard-scroll"><table class="leaderboard-table"><thead><tr><th>#</th><th>Puzzle</th><th>Player</th><th>Difficulty</th><th>State</th><th>Scored</th><th>Time</th><th>Checks</th></tr></thead><tbody>${entries.map((entry, index) => {
+    const puzzleCount = new Set(entries.map((entry) => entry.puzzleId ?? entry.puzzleCode)).size;
+    const showPuzzleGroups = puzzleCount > 1;
+    let previousPuzzle = null;
+    const tableRows = entries.map((entry, index) => {
       const code = entry.puzzleCode ?? puzzleCode(entry.puzzleId);
+      const puzzleKey = entry.puzzleId ?? code;
+      const groupHeader = showPuzzleGroups && puzzleKey !== previousPuzzle
+        ? `<tr class="leaderboard-group-row"><th colspan="8" scope="rowgroup"><span>Puzzle ${escapeHtml(code)}</span><small>${entry.puzzleTotal ?? 1} score${Number(entry.puzzleTotal) === 1 ? '' : 's'}</small></th></tr>`
+        : '';
+      previousPuzzle = puzzleKey;
       const replayable = Boolean(entry.puzzleSeed || entry.dateSeed);
       const puzzleCell = replayable
         ? `<button class="leaderboard-code" type="button" data-replay-puzzle data-puzzle-id="${escapeHtml(entry.puzzleId ?? '')}" data-puzzle-seed="${escapeHtml(entry.puzzleSeed ?? '')}" data-date-seed="${escapeHtml(entry.dateSeed ?? '')}" data-difficulty="${escapeHtml(entry.difficulty ?? '')}" data-puzzle-code="${code}" data-is-daily="${Boolean(entry.isDaily || entry.dateSeed)}">${code}</button>`
@@ -980,8 +989,9 @@ export class UIController {
       const scoredDate = formatScoreDate(scoredAt);
       const checkCount = Number(entry.checkCount ?? 0);
       const checkLabel = checkCount === 0 ? '<span class="leaderboard-clean-badge">Clean</span>' : `${checkCount}`;
-      return `<tr class="${checkCount === 0 ? 'is-clean' : ''}"><td>${entry.rank ?? index + 1}</td><td>${puzzleCell}</td><td>${playerCell}</td><td>${escapeHtml(entry.difficulty ?? '—')}</td><td>${escapeHtml(location)}</td><td><time class="leaderboard-date" datetime="${escapeHtml(scoredAt ?? '')}" title="${escapeHtml(formatScoreDateLong(scoredAt))}">${escapeHtml(scoredDate)}</time></td><td>${formatTime(entry.timeMs)}</td><td>${checkLabel}</td></tr>`;
-    }).join('')}</tbody></table></div>`;
+      return `${groupHeader}<tr class="${checkCount === 0 ? 'is-clean' : ''}"><td>${entry.puzzleRank ?? entry.rank ?? index + 1}</td><td>${puzzleCell}</td><td>${playerCell}</td><td>${escapeHtml(entry.difficulty ?? '—')}</td><td>${escapeHtml(location)}</td><td><time class="leaderboard-date" datetime="${escapeHtml(scoredAt ?? '')}" title="${escapeHtml(formatScoreDateLong(scoredAt))}">${escapeHtml(scoredDate)}</time></td><td>${formatTime(entry.timeMs)}</td><td>${checkLabel}</td></tr>`;
+    }).join('');
+    body.innerHTML = `<div class="leaderboard-scroll"><table class="leaderboard-table"><thead><tr><th>#</th><th>Puzzle</th><th>Player</th><th>Difficulty</th><th>State</th><th>Scored</th><th>Time</th><th>Checks</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
   }
 }
 
